@@ -10,8 +10,10 @@
       <configuration>
         <setting name="validation-enabled" value="true" />
         <setting name="provider-name" value="" />
-        <datasource-mapping />
-        <deploymentDescriptor name="persistence.xml" url="file://$MODULE_DIR$/src/main/META-INF/persistence.xml" />
+        <datasource-mapping>
+          <factory-entry name="testPU" />
+        </datasource-mapping>
+        <deploymentDescriptor name="persistence.xml" url="file://$MODULE_DIR$/src/test/META-INF/persistence.xml" />
       </configuration>
     </facet>
   </component>
@@ -27,6 +29,16 @@
       <library name="JPA 1.0">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/javaee.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="Engine Library" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$APPLICATION_HOME_DIR$/lib/junit-4.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

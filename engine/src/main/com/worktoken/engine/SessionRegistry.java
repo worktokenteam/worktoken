@@ -7,13 +7,19 @@ import java.util.Map;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 public class SessionRegistry {
-    private static Map<Long, WorkSession> sessions = new HashMap<Long, WorkSession>();
+    private static Map<String, WorkSession> sessions = new HashMap<String, WorkSession>();
 
-    public static Map<Long, WorkSession> getSessions() {
-        return sessions;
+    public static void addSession(WorkSession session) {
+        sessions.put(session.getId(), session);
     }
 
-    public static WorkSession getSession(long id) {
+    public static WorkSession getSession(String id) {
         return sessions.get(id);
+    }
+
+    public static void removeSession(String id) {
+        if (sessions.containsKey(id)) {
+            sessions.remove(id);
+        }
     }
 }

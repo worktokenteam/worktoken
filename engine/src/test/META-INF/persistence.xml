@@ -3,6 +3,18 @@
 
     <persistence-unit name="testPU">
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <class>com.worktoken.model.BusinessProcess</class>
+        <class>com.worktoken.model.CatchEventNode</class>
+        <class>com.worktoken.model.EventBasedGateway</class>
+        <class>com.worktoken.model.EventTrigger</class>
+        <class>com.worktoken.model.ExclusiveGateway</class>
+        <class>com.worktoken.model.MessageTrigger</class>
+        <class>com.worktoken.model.Node</class>
+        <class>com.worktoken.model.ReceiveTask</class>
+        <class>com.worktoken.model.SendTask</class>
+        <class>com.worktoken.model.ThrowEventNode</class>
+        <class>com.worktoken.model.TimerTrigger</class>
+        <class>com.worktoken.model.UserTask</class>
         <properties>
             <property name="hibernate.connection.url" value="jdbc:hsqldb:mem:unit-testing-jpa"/>
             <property name="hibernate.connection.driver_class" value="org.hsqldb.jdbcDriver"/>

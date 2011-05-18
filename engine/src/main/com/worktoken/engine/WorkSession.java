@@ -15,6 +15,8 @@ import java.util.Set;
  */
 public interface WorkSession {
 
+    public String getId();
+
     /**
      * Send token to outgoing connector.
      *

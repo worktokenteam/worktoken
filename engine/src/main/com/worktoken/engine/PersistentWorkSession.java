@@ -8,10 +8,8 @@ import org.omg.spec.dd._20100524.di.Diagram;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityTransaction;
 import javax.persistence.NoResultException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.UserTransaction;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
@@ -30,26 +28,99 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class PersistentWorkSession implements WorkSession, Runnable {
 
-    EntityManagerFactory emf;
+    private String sessionId;
 
-    private HashMap<String, TDefinitions> definitionsMap;
-    private HashMap<String, ProcessDefinition> processDefinitions;
-    private HashMap<String, MessageDefinition> messageDefinitions;
+    // persistence stuff
+    private EntityManagerFactory emf;
     private ThreadLocal<EntityManager> em;
     private ThreadLocal<Integer> acquireCounter;
-    private LinkedBlockingQueue<WorkItem> workItems;
+
+    // runner thread stuff
     private Executor executor;
     private volatile boolean cancelled;
+    private LinkedBlockingQueue<WorkItem> workItems;
     private static final long TriggerPollCycle = 60000L;
     private long lastTriggerPollTime = 0L;
 
-    protected PersistentWorkSession(EntityManagerFactory emf) {
+    // BPMN stuff
+    private HashMap<String, TDefinitions> definitionsMap;
+    private HashMap<String, ProcessDefinition> processDefinitions;
+    private HashMap<String, MessageDefinition> messageDefinitions;
+
+    // =========================================================================================== PersistentWorkSession
+
+    protected PersistentWorkSession(String id, EntityManagerFactory emf) {
+        if (id == null || id.isEmpty()) {
+            throw new IllegalArgumentException("Null or missing session id in PersistentWorkSession constructor");
+        }
+        if (SessionRegistry.getSession(id) != null) {
+            throw new IllegalArgumentException("Duplicate session id in PersistentWorkSession constructor");
+        }
+        if (emf == null) {
+            throw new IllegalArgumentException("Null EntityManagerFactory in PersistentWorkSession constructor");
+        }
         this.emf = emf;
+        this.sessionId = id;
+        SessionRegistry.addSession(this);
         workItems = new LinkedBlockingQueue<WorkItem>();
         executor = Executors.newFixedThreadPool(1);
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
         executor.execute(this);
+    }
+
+    // =========================================================================================================== getId
+
+    @Override
+    public String getId() {
+        return sessionId;
+    }
+
+    // ============================================================================================ acquireEntityManager
+
+    protected EntityManager acquireEntityManager() {
+        if (em.get() == null) {
+            em.set(emf.createEntityManager());
+            acquireCounter.set(1);
+        } else {
+            acquireCounter.set(acquireCounter.get() + 1);
+        }
+        return em.get();
+    }
+
+    // ============================================================================================ releaseEntityManager
+
+    protected void releaseEntityManager() {
+        if (acquireCounter.get() <= 0) {
+            throw new IllegalStateException("Mismatched call to releaseEntityManager()");
+        }
+        acquireCounter.set(acquireCounter.get() - 1);
+        if (acquireCounter.get() == 0) {
+            em.remove();
+        }
+    }
+
+    // ================================================================================================ beginTransaction
+
+    protected void beginTransaction() {
+        em.get().getTransaction().begin();
+    }
+
+    // =============================================================================================== commitTransaction
+
+    protected void commitTransaction() {
+        EntityTransaction transaction = em.get().getTransaction();
+        if (transaction.getRollbackOnly()) {
+            transaction.rollback();
+        } else {
+            transaction.commit();
+        }
+    }
+
+    // =============================================================================================== commitTransaction
+
+    protected void markRollbackTransaction() {
+        em.get().getTransaction().setRollbackOnly();
     }
 
     // ============================================================================================================= run
@@ -66,22 +137,15 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
                 interrupted = true;
             }
             if (workItem != null) {
-                startPersistence();
                 acquireEntityManager();
+
                 BusinessProcess process = em.get().find(BusinessProcess.class, workItem.getProcessInstanceId());
                 if (process == null) {
                     releaseEntityManager();
-                    stopPersistence();
                     throw new IllegalStateException("Process does not exist (id=" + workItem.getProcessInstanceId() + ")");
                 }
-                UserTransaction transaction;
-                try {
-                    transaction = Transaction.instance();
-                    transaction.begin();
-                    transaction..enlist(em.get());
-                } catch (Exception e) {
-                    throw new IllegalStateException("Failed to begin transaction, " + e);
-                }
+
+                beginTransaction();
 
                 if (workItem instanceof TokenForNode) {
                     TokenForNode t4n = (TokenForNode) workItem;
@@ -90,15 +154,9 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
                         node = findOrCreateNode(t4n.getNodeDef(), process);
                         node.tokenIn(t4n.getToken(), t4n.getConnector());
                     } catch (Exception e) {
-                        try {
-                            transaction.rollback();
-                        } catch (SystemException e1) {
-                            releaseEntityManager();
-                            stopPersistence();
-                            throw new IllegalStateException("Failed to roll back transaction, " + e);
-                        }
+                        markRollbackTransaction();
+                        commitTransaction();
                         releaseEntityManager();
-                        stopPersistence();
                         e.printStackTrace();
                         throw new IllegalStateException("Failed to process target node, " + e);
                     }
@@ -123,15 +181,9 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
                     try {
                         handleTokenFromNode((TokenFromNode) workItem);
                     } catch (Exception e) {
-                        try {
-                            transaction.rollback();
-                        } catch (SystemException e1) {
-                            releaseEntityManager();
-                            stopPersistence();
-                            throw new IllegalStateException("Failed to roll back transaction, " + e);
-                        }
+                        markRollbackTransaction();
+                        commitTransaction();
                         releaseEntityManager();
-                        stopPersistence();
                         e.printStackTrace();
                         throw new IllegalStateException("Failed to process outgoing token from node id=" + ((TokenFromNode) workItem).getNodeId() + ", " + e);
                     }
@@ -139,27 +191,16 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
                     try {
                         handleEventToken((EventForNode) workItem);
                     } catch (Exception e) {
-                        try {
-                            transaction.rollback();
-                        } catch (SystemException e1) {
-                            releaseEntityManager();
-                            stopPersistence();
-                            throw new IllegalStateException("Failed to roll back transaction, " + e);
-                        }
+                        markRollbackTransaction();
+                        commitTransaction();
                         releaseEntityManager();
-                        stopPersistence();
                         e.printStackTrace();
                         throw new IllegalStateException("Failed to process event id=" + ((EventForNode) workItem).getEventToken().getDefinitionId() + ", " + e);
                     }
                 }
                 em.get().flush();
-                try {
-                    transaction.commit();
-                } catch (Exception e) {
-                    throw new IllegalStateException("Failed to commit transaction, " + e);
-                }
+                commitTransaction();
                 releaseEntityManager();
-                stopPersistence();
             }
             fireTimers();
         }
@@ -172,18 +213,8 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
 
     private void fireTimers() {
         if (System.currentTimeMillis() - lastTriggerPollTime > TriggerPollCycle) {
-            startPersistence();
             acquireEntityManager();
-            UserTransaction transaction;
-            try {
-                transaction = Transaction.instance();
-                transaction.begin();
-                transaction.enlist(em.get());
-            } catch (Exception e) {
-                e.printStackTrace();
-                throw new IllegalStateException("Failed to begin transaction, " + e);
-            }
-
+            beginTransaction();
             List<TimerTrigger> triggers = em.get().createNamedQuery("TimerTrigger.findAlerts").setParameter("date", new Date()).getResultList();
             for (TimerTrigger trigger : triggers) {
                 /*
@@ -201,13 +232,8 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
                 offer(e4n);
             }
             em.get().flush();
-            try {
-                transaction.commit();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to commit transaction, " + e);
-            }
+            commitTransaction();
             releaseEntityManager();
-            stopPersistence();
             lastTriggerPollTime = System.currentTimeMillis();
         }
     }
@@ -524,7 +550,7 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
      * @return
      */
     @Override
-    public String readDefinitions(InputStream stream) throws JAXBException {
+    public TDefinitions readDefinitions(InputStream stream) throws JAXBException {
         String packageName1 = TDefinitions.class.getPackage().getName();
         String packageName2 = BPMNDiagram.class.getPackage().getName();
         String packageName3 = Bounds.class.getPackage().getName();
@@ -549,7 +575,7 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
         getDefinitionsMap().put(id, tDefinitions);
         scanForProcesses(tDefinitions);
         scanForMessages(tDefinitions);
-        return id;
+        return tDefinitions;
     }
 
     // ================================================================================================== getDefinitions
@@ -612,7 +638,7 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
         }
         acquireEntityManager();
         process.setDefinitionId(id);
-        process.setSessionId(getSessionId());
+        process.setSessionId(getId());
         em.get().persist(process);
         final List<TActivity> startActivities = new ArrayList<TActivity>();
         final List<TCatchEvent> noneStartEvents = new ArrayList<TCatchEvent>();
@@ -1253,38 +1279,6 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
         }
     }
 
-
-    protected void startPersistence() {
-    }
-
-    protected void stopPersistence() {
-    }
-
-    protected abstract EntityManager findEntityManager();
-
-    // ============================================================================================ acquireEntityManager
-
-    private EntityManager acquireEntityManager() {
-        if (em.get() == null) {
-            em.set(findEntityManager());
-            acquireCounter.set(1);
-        } else {
-            acquireCounter.set(acquireCounter.get() + 1);
-        }
-        return em.get();
-    }
-
-    // ============================================================================================ releaseEntityManager
-
-    private void releaseEntityManager() {
-        if (acquireCounter.get() <= 0) {
-            throw new IllegalStateException("Mismatched call to releaseEntityManager()");
-        }
-        acquireCounter.set(acquireCounter.get() - 1);
-        if (acquireCounter.get() == 0) {
-            em.remove();
-        }
-    }
 
     // ================================================================================================ scanForProcesses
 

@@ -16,7 +16,7 @@ public class BusinessProcess {
     @GeneratedValue(strategy = GenerationType.TABLE)
     private long instanceId;
     private String definitionId;
-    private long sessionId;
+    private String sessionId;
 //    @OneToMany(mappedBy = "process", fetch = FetchType.LAZY)
 //    private Set<Node> nodes;
 
@@ -47,11 +47,11 @@ public class BusinessProcess {
         getSession().sendEventToken(eventToken, this);
     }
 
-    public void setSessionId(long sessionId) {
+    public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
     }
 
-    public long getSessionId() {
+    public String getSessionId() {
         return sessionId;
     }
 
