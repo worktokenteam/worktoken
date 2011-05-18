@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 
-public abstract class PersistentWorkSession implements WorkSession, Runnable {
+public class PersistentWorkSession implements WorkSession, Runnable {
 
     private String sessionId;
 
@@ -464,7 +464,13 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
     @Override
     public void close() throws InterruptedException {
         cancelled = true;
-        Thread.sleep(1000);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            SessionRegistry.removeSession(getId());
+        }
     }
 
     // =============================================================================================== cleanUpStartNodes
@@ -1180,7 +1186,10 @@ public abstract class PersistentWorkSession implements WorkSession, Runnable {
         return trigger;
     }
 
-    protected abstract AnnotationDictionary getDictionary();
+// TODO: add to constructor
+    protected AnnotationDictionary getDictionary() {
+        return null;
+    };
 
     // ======================================================================================= createMessageEventTrigger
 
