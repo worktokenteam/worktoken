@@ -15,7 +15,7 @@ import java.util.List;
  * Time: 10:33 PM
  * To change this template use File | Settings | File Templates.
  */
-class ElementIterator<T> implements Iterator<T> {
+public class ElementIterator<T> implements Iterator<T> {
 
     private List<T> elements;
     private int index;

@@ -4,6 +4,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.omg.spec.bpmn._20100524.model.TDefinitions;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -44,6 +45,9 @@ public class PersistentWorkSessionTest {
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
         session = new PersistentWorkSession("com.worktoken.TestSession", emf);
+        TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helpdesk.bpmn"));
+        Assert.assertNotNull(tDefinitions);
+        Assert.assertTrue("Definition".equals(tDefinitions.getId()));
         session.close();
         em.getTransaction().commit();
         em.close();

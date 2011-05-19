@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions exporter="BP-VA" exporterVersion="1" id="Definition" targetNamespace="http://www.omg.org/bpmn20" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpva="http://www.visual-paradigm.com/product/bpva/" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd">
+	<collaboration id="collaboration-_1">
+		<participant id="_3" name="Customer" processRef="process-_3">
+        </participant>
+		<participant id="com_worktoken_helpdesk" name="Help desk" processRef="process-com_worktoken_helpdesk">
+        </participant>
+		<messageFlow id="com_worktoken_helpdesk_1_14" name="Answer" sourceRef="com_worktoken_helpdesk_1_11" targetRef="_3">
+        </messageFlow>
+		<messageFlow id="_7" name="Service Request" sourceRef="_3" targetRef="com_worktoken_helpdesk_1_1">
+        </messageFlow>
+		<messageFlow id="_42" name="Confirmation" sourceRef="_3" targetRef="com_worktoken_helpdesk_1_55">
+        </messageFlow>
+	</collaboration>
+	<process id="_1" name="Help Desk">
+    </process>
+	<process id="process-_3" name="Customer"/>
+	<process id="process-com_worktoken_helpdesk" name="Help desk">
+		<laneSet id="laneset-com_worktoken_helpdesk">
+			<lane id="com_worktoken_helpdesk_1" name="Tier 1">
+                <flowNodeRef>com_worktoken_helpdesk_1_1</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_5</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_11</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_15</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_17</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_23</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_24</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_43</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_50</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_52</flowNodeRef>
+				<flowNodeRef>com_worktoken_helpdesk_1_55</flowNodeRef>
+			</lane>
+		</laneSet>
+		<startEvent id="com_worktoken_helpdesk_1_1" isInterrupting="true" name="Receive request">
+            <outgoing>com_worktoken_helpdesk_1_6</outgoing>
+			<messageEventDefinition id="ID_54167514_1267_2200_2400_000000600012" messageRef="ID_21465726_5737_2200_2400_000000600032"/>
+		</startEvent>
+		<businessRuleTask completionQuantity="1" id="com_worktoken_helpdesk_1_5" implementation="##unspecified" isForCompensation="false" name="Lookup answer" startQuantity="1">
+            <incoming>com_worktoken_helpdesk_1_6</incoming>
+			<outgoing>com_worktoken_helpdesk_1_16</outgoing>
+		</businessRuleTask>
+		<sendTask completionQuantity="1" id="com_worktoken_helpdesk_1_11" implementation="##unspecified" isForCompensation="false" messageRef="ID_14170422_1157_2200_2400_000000600010" name="Send answer" startQuantity="1">
+            <incoming>com_worktoken_helpdesk_1_27</incoming>
+			<incoming>com_worktoken_helpdesk_1_38</incoming>
+			<outgoing>com_worktoken_helpdesk_1_51</outgoing>
+		</sendTask>
+		<sequenceFlow id="com_worktoken_helpdesk_1_6" name="" sourceRef="com_worktoken_helpdesk_1_1" targetRef="com_worktoken_helpdesk_1_5">
+        </sequenceFlow>
+		<exclusiveGateway default="com_worktoken_helpdesk_1_18" gatewayDirection="Diverging" id="com_worktoken_helpdesk_1_15" name="Canned answer available?">
+            <incoming>com_worktoken_helpdesk_1_16</incoming>
+			<outgoing>com_worktoken_helpdesk_1_38</outgoing>
+			<outgoing>com_worktoken_helpdesk_1_18</outgoing>
+		</exclusiveGateway>
+		<sequenceFlow id="com_worktoken_helpdesk_1_16" name="" sourceRef="com_worktoken_helpdesk_1_5" targetRef="com_worktoken_helpdesk_1_15">
+        </sequenceFlow>
+		<sequenceFlow id="com_worktoken_helpdesk_1_38" name="Yes" sourceRef="com_worktoken_helpdesk_1_15" targetRef="com_worktoken_helpdesk_1_11">
+        </sequenceFlow>
+		<userTask completionQuantity="1" id="com_worktoken_helpdesk_1_17" implementation="##unspecified" isForCompensation="false" name="Prepare answer" startQuantity="1">
+            <incoming>com_worktoken_helpdesk_1_18</incoming>
+			<incoming>com_worktoken_helpdesk_1_26</incoming>
+			<outgoing>com_worktoken_helpdesk_1_27</outgoing>
+		</userTask>
+		<sequenceFlow id="com_worktoken_helpdesk_1_18" name="No" sourceRef="com_worktoken_helpdesk_1_15" targetRef="com_worktoken_helpdesk_1_17">
+        </sequenceFlow>
+		<endEvent id="com_worktoken_helpdesk_1_23" name="Request autoclosed">
+            <incoming>com_worktoken_helpdesk_1_54</incoming>
+		</endEvent>
+		<exclusiveGateway gatewayDirection="Diverging" id="com_worktoken_helpdesk_1_24" name="Answer accepted?">
+            <incoming>com_worktoken_helpdesk_1_57</incoming>
+			<outgoing>com_worktoken_helpdesk_1_42</outgoing>
+			<outgoing>com_worktoken_helpdesk_1_26</outgoing>
+		</exclusiveGateway>
+		<sequenceFlow id="com_worktoken_helpdesk_1_42" name="Yes" sourceRef="com_worktoken_helpdesk_1_24" targetRef="com_worktoken_helpdesk_1_43">
+        </sequenceFlow>
+		<sequenceFlow id="com_worktoken_helpdesk_1_26" name="No" sourceRef="com_worktoken_helpdesk_1_24" targetRef="com_worktoken_helpdesk_1_17">
+        </sequenceFlow>
+		<sequenceFlow id="com_worktoken_helpdesk_1_27" name="" sourceRef="com_worktoken_helpdesk_1_17" targetRef="com_worktoken_helpdesk_1_11">
+        </sequenceFlow>
+		<endEvent id="com_worktoken_helpdesk_1_43" name="Request closed">
+            <incoming>com_worktoken_helpdesk_1_42</incoming>
+		</endEvent>
+		<eventBasedGateway gatewayDirection="Diverging" id="com_worktoken_helpdesk_1_50" name="">
+            <incoming>com_worktoken_helpdesk_1_51</incoming>
+			<outgoing>com_worktoken_helpdesk_1_53</outgoing>
+			<outgoing>com_worktoken_helpdesk_1_56</outgoing>
+		</eventBasedGateway>
+		<sequenceFlow id="com_worktoken_helpdesk_1_51" name="" sourceRef="com_worktoken_helpdesk_1_11" targetRef="com_worktoken_helpdesk_1_50">
+        </sequenceFlow>
+		<intermediateCatchEvent id="com_worktoken_helpdesk_1_52" name="48 Hours">
+            <incoming>com_worktoken_helpdesk_1_53</incoming>
+			<outgoing>com_worktoken_helpdesk_1_54</outgoing>
+			<timerEventDefinition id="ID_66314352_3557_2206_0052_000671400013">
+				<timeDuration>P2D</timeDuration>
+			</timerEventDefinition>
+		</intermediateCatchEvent>
+		<sequenceFlow id="com_worktoken_helpdesk_1_53" name="" sourceRef="com_worktoken_helpdesk_1_50" targetRef="com_worktoken_helpdesk_1_52">
+        </sequenceFlow>
+		<sequenceFlow id="com_worktoken_helpdesk_1_54" name="" sourceRef="com_worktoken_helpdesk_1_52" targetRef="com_worktoken_helpdesk_1_23">
+        </sequenceFlow>
+		<intermediateCatchEvent id="com_worktoken_helpdesk_1_55" name="">
+            <incoming>com_worktoken_helpdesk_1_56</incoming>
+			<outgoing>com_worktoken_helpdesk_1_57</outgoing>
+			<messageEventDefinition id="ID_16314352_3557_2206_0052_000671400014" messageRef="ID_30607364_7317_2206_0052_000400200024"/>
+		</intermediateCatchEvent>
+		<sequenceFlow id="com_worktoken_helpdesk_1_56" name="" sourceRef="com_worktoken_helpdesk_1_50" targetRef="com_worktoken_helpdesk_1_55">
+        </sequenceFlow>
+		<sequenceFlow id="com_worktoken_helpdesk_1_57" name="" sourceRef="com_worktoken_helpdesk_1_55" targetRef="com_worktoken_helpdesk_1_24">
+        </sequenceFlow>
+	</process>
+	<message id="ID_21465726_5737_2200_2400_000000600032" itemRef="ID_21465726_5737_2200_2400_000000600033" name="Question">
+    </message>
+	<itemDefinition id="ID_21465726_5737_2200_2400_000000600033" isCollection="false" itemKind="Information" structureRef="String">
+    </itemDefinition>
+	<message id="ID_14170422_1157_2200_2400_000000600010" itemRef="ID_14170422_1157_2200_2400_000000600011" name="Answer">
+    </message>
+	<itemDefinition id="ID_14170422_1157_2200_2400_000000600011" isCollection="false" itemKind="Information" structureRef="String">
+    </itemDefinition>
+	<message id="ID_30607364_7317_2206_0052_000400200024" itemRef="ID_74170422_1157_2200_2400_000000600013" name="Confirmation">
+    </message>
+	<itemDefinition id="ID_74170422_1157_2200_2400_000000600013" isCollection="false" itemKind="Information" structureRef="Confirmation">
+    </itemDefinition>
+	<bpmndi:BPMNDiagram id="diagram-_1" name="Help Desk">
+		<bpmndi:BPMNPlane bpmnElement="_1" id="plane-_1">
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_14" id="ID_16231052_1267_2200_2400_000000600025" sourceElement="ID_16231052_1267_2200_2400_000000600030" targetElement="ID_04167514_1267_2200_2400_000000600011">
+				<omgdi:waypoint x="620" y="239"/>
+				<omgdi:waypoint x="620" y="130"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="_7" id="ID_70167514_1267_2200_2400_000000600001" sourceElement="ID_04167514_1267_2200_2400_000000600011" targetElement="ID_04167514_1267_2200_2400_000000600003">
+				<omgdi:waypoint x="125" y="130"/>
+				<omgdi:waypoint x="125" y="370"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="_42" id="ID_01514352_3557_2206_0052_000671400001" sourceElement="ID_04167514_1267_2200_2400_000000600011" targetElement="ID_65514352_3557_2206_0052_000671400007">
+				<omgdi:waypoint x="860" y="130"/>
+				<omgdi:waypoint x="860" y="310"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_3" id="ID_04167514_1267_2200_2400_000000600011" isHorizontal="true">
+				<omgdc:Bounds height="90" width="1035" x="30" y="40"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1" id="ID_04167514_1267_2200_2400_000000600002" isHorizontal="true">
+				<omgdc:Bounds height="270" width="1020" x="45" y="210"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_1" id="ID_04167514_1267_2200_2400_000000600003">
+				<omgdc:Bounds height="30" width="30" x="110" y="370"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_5" id="ID_04167514_1267_2200_2400_000000600004">
+				<omgdc:Bounds height="40" width="120" x="185" y="370"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_11" id="ID_16231052_1267_2200_2400_000000600030">
+				<omgdc:Bounds height="40" width="140" x="550" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_6" id="ID_04167514_1267_2200_2400_000000600005" sourceElement="ID_04167514_1267_2200_2400_000000600003" targetElement="ID_04167514_1267_2200_2400_000000600004">
+				<omgdi:waypoint x="140" y="385"/>
+				<omgdi:waypoint x="184" y="385"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_15" id="ID_03207364_7317_2206_0052_000400200002">
+				<omgdc:Bounds height="40" width="40" x="355" y="370"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_16" id="ID_03207364_7317_2206_0052_000400200003" sourceElement="ID_04167514_1267_2200_2400_000000600004" targetElement="ID_03207364_7317_2206_0052_000400200002">
+				<omgdi:waypoint x="305" y="390"/>
+				<omgdi:waypoint x="354" y="390"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_38" id="ID_03207364_7317_2206_0052_000400200004" sourceElement="ID_03207364_7317_2206_0052_000400200002" targetElement="ID_16231052_1267_2200_2400_000000600030">
+				<omgdi:waypoint x="375" y="370"/>
+				<omgdi:waypoint x="375" y="255"/>
+				<omgdi:waypoint x="549" y="255"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_17" id="ID_03207364_7317_2206_0052_000400200005">
+				<omgdc:Bounds height="40" width="140" x="550" y="370"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_18" id="ID_03207364_7317_2206_0052_000400200006" sourceElement="ID_03207364_7317_2206_0052_000400200002" targetElement="ID_03207364_7317_2206_0052_000400200005">
+				<omgdi:waypoint x="395" y="390"/>
+				<omgdi:waypoint x="549" y="390"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_23" id="ID_43207364_7317_2206_0052_000400200012">
+				<omgdc:Bounds height="20" width="20" x="980" y="310"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_24" id="ID_23207364_7317_2206_0052_000400200014">
+				<omgdc:Bounds height="40" width="40" x="840" y="370"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_42" id="ID_23207364_7317_2206_0052_000400200016" sourceElement="ID_23207364_7317_2206_0052_000400200014" targetElement="ID_27210764_1157_2200_2400_000000600001">
+				<omgdi:waypoint x="880" y="390"/>
+				<omgdi:waypoint x="980" y="390"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_26" id="ID_23207364_7317_2206_0052_000400200017" sourceElement="ID_23207364_7317_2206_0052_000400200014" targetElement="ID_03207364_7317_2206_0052_000400200005">
+				<omgdi:waypoint x="860" y="410"/>
+				<omgdi:waypoint x="860" y="435"/>
+				<omgdi:waypoint x="505" y="435"/>
+				<omgdi:waypoint x="505" y="400"/>
+				<omgdi:waypoint x="549" y="400"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_27" id="ID_23207364_7317_2206_0052_000400200020" sourceElement="ID_03207364_7317_2206_0052_000400200005" targetElement="ID_16231052_1267_2200_2400_000000600030">
+				<omgdi:waypoint x="690" y="390"/>
+				<omgdi:waypoint x="730" y="390"/>
+				<omgdi:waypoint x="730" y="310"/>
+				<omgdi:waypoint x="505" y="310"/>
+				<omgdi:waypoint x="505" y="270"/>
+				<omgdi:waypoint x="549" y="270"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_43" id="ID_27210764_1157_2200_2400_000000600001">
+				<omgdc:Bounds height="20" width="20" x="980" y="380"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_50" id="ID_25514352_3557_2206_0052_000671400002">
+				<omgdc:Bounds height="40" width="40" x="760" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_51" id="ID_25514352_3557_2206_0052_000671400003" sourceElement="ID_16231052_1267_2200_2400_000000600030" targetElement="ID_25514352_3557_2206_0052_000671400002">
+				<omgdi:waypoint x="690" y="260"/>
+				<omgdi:waypoint x="759" y="260"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_52" id="ID_25514352_3557_2206_0052_000671400004">
+				<omgdc:Bounds height="20" width="20" x="900" y="250"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_53" id="ID_25514352_3557_2206_0052_000671400005" sourceElement="ID_25514352_3557_2206_0052_000671400002" targetElement="ID_25514352_3557_2206_0052_000671400004">
+				<omgdi:waypoint x="800" y="260"/>
+				<omgdi:waypoint x="900" y="260"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_54" id="ID_65514352_3557_2206_0052_000671400006" sourceElement="ID_25514352_3557_2206_0052_000671400004" targetElement="ID_43207364_7317_2206_0052_000400200012">
+				<omgdi:waypoint x="920" y="260"/>
+				<omgdi:waypoint x="990" y="260"/>
+				<omgdi:waypoint x="990" y="310"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk_1_55" id="ID_65514352_3557_2206_0052_000671400007">
+				<omgdc:Bounds height="20" width="20" x="850" y="310"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_56" id="ID_65514352_3557_2206_0052_000671400010" sourceElement="ID_25514352_3557_2206_0052_000671400002" targetElement="ID_65514352_3557_2206_0052_000671400007">
+				<omgdi:waypoint x="780" y="280"/>
+				<omgdi:waypoint x="780" y="320"/>
+				<omgdi:waypoint x="850" y="320"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="com_worktoken_helpdesk_1_57" id="ID_65514352_3557_2206_0052_000671400011" sourceElement="ID_65514352_3557_2206_0052_000671400007" targetElement="ID_23207364_7317_2206_0052_000400200014">
+				<omgdi:waypoint x="860" y="330"/>
+				<omgdi:waypoint x="860" y="370"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="com_worktoken_helpdesk" id="ID_04167514_1267_2200_2400_000000600010" isHorizontal="true">
+				<omgdc:Bounds height="270" width="1035" x="30" y="210"/>
+			</bpmndi:BPMNShape>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</definitions>
