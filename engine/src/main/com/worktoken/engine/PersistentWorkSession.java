@@ -200,15 +200,15 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                         e.printStackTrace();
                         throw new IllegalStateException("Failed to process outgoing token from node id=" + ((TokenFromNode) workItem).getNodeId() + ", " + e);
                     }
-                } else if (workItem instanceof EventForNode) {
+                } else if (workItem instanceof EventIn) {
                     try {
-                        handleEventToken((EventForNode) workItem);
+                        handleEventToken((EventIn) workItem);
                     } catch (Exception e) {
                         markRollbackTransaction();
                         commitTransaction();
                         releaseEntityManager();
                         e.printStackTrace();
-                        throw new IllegalStateException("Failed to process event id=" + ((EventForNode) workItem).getEventToken().getDefinitionId() + ", " + e);
+                        throw new IllegalStateException("Failed to process event id=" + ((EventIn) workItem).getEventToken().getDefinitionId() + ", " + e);
                     }
                 }
                 em.get().flush();
@@ -235,7 +235,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 First thing we should do is to disarm trigger, to avoid false alarms
                  */
                 trigger.disarm();
-                EventForNode e4n = new EventForNode();
+                EventIn e4n = new EventIn();
                 BusinessProcess process = trigger.getEventNode().getProcess();
                 e4n.setProcessInstanceId(process.getInstanceId());
                 e4n.setProcessDefinitionId(process.getDefinitionId());
@@ -525,15 +525,16 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     // ================================================================================================ handleEventToken
 
-    private void handleEventToken(EventForNode e4n) {
-        acquireEntityManager();
-        BusinessProcess process = em.get().find(BusinessProcess.class, e4n.getProcessInstanceId());
-        EventToken token = e4n.getEventToken();
+    private void handleEventToken(EventIn eventIn) {
+        assert isRunner();  // may not be called from application thread
+//        acquireEntityManager(); // we were called from runner, thus all persistence stuff is in place already
+        BusinessProcess process = em.get().find(BusinessProcess.class, eventIn.getProcessInstanceId());
+        EventToken token = eventIn.getEventToken();
         EventTrigger trigger;
         if (token.getTriggerInstanceId() != 0) {
             trigger = em.get().find(EventTrigger.class, token.getTriggerInstanceId());
         } else {
-            trigger = (EventTrigger) em.get().createNamedQuery("EventTrigger.findByDefIdAndProcess").setParameter("defId", e4n.getEventToken().getDefinitionId()).setParameter("process", process).getSingleResult();
+            trigger = (EventTrigger) em.get().createNamedQuery("EventTrigger.findByDefIdAndProcess").setParameter("defId", eventIn.getEventToken().getDefinitionId()).setParameter("process", process).getSingleResult();
         }
         if (trigger != null) {
             /*
@@ -542,22 +543,22 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 multiple start event nodes.
              */
             CatchEventNode node = trigger.getEventNode();
-            node.eventIn(e4n.getEventToken());
+            node.eventIn(eventIn.getEventToken());
             if (em.get().contains(node)) {
-                em.get().merge(node);
+                trigger.setEventNode(em.get().merge(node));
             }
         }
-        releaseEntityManager();
+//        releaseEntityManager();
     }
 
     // ================================================================================================== sendEventToken
 
-    public void sendEventToken(EventToken eventToken, BusinessProcess process) {
-        EventForNode e4n = new EventForNode();
-        e4n.setProcessInstanceId(process.getInstanceId());
-        e4n.setProcessDefinitionId(process.getDefinitionId());
-        e4n.setEventToken(eventToken);
-        offer(e4n);
+    @Override
+    public void sendEventToken(EventToken eventToken, long processId) {
+        EventIn eventIn = new EventIn();
+        eventIn.setProcessInstanceId(processId);
+        eventIn.setEventToken(eventToken);
+        offer(eventIn);
     }
 
     // ================================================================================================= readDefinitions

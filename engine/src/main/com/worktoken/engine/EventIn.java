@@ -2,7 +2,7 @@ package com.worktoken.engine;
 
 import com.worktoken.model.EventToken;
 
-public class EventForNode extends WorkItem {
+public class EventIn extends WorkItem {
     private EventToken eventToken;
 
     public EventToken getEventToken() {

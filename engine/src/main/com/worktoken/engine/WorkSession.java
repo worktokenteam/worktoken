@@ -1,8 +1,10 @@
 package com.worktoken.engine;
 
-import com.worktoken.model.*;
+import com.worktoken.model.Connector;
+import com.worktoken.model.EventToken;
+import com.worktoken.model.Node;
+import com.worktoken.model.WorkToken;
 import org.omg.spec.bpmn._20100524.model.TDefinitions;
-import org.omg.spec.bpmn._20100524.model.TFlowNode;
 import org.omg.spec.bpmn._20100524.model.TProcess;
 
 import javax.xml.bind.JAXBException;
@@ -63,7 +65,7 @@ public interface WorkSession {
 
     public long createProcess(final String id);
 
-    public void sendEventToken(EventToken eventToken, BusinessProcess process);
+    public void sendEventToken(EventToken eventToken, long processId);
 
     public void close() throws InterruptedException;
 

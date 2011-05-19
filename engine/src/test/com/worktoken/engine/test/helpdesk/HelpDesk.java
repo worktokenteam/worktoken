@@ -2,6 +2,7 @@ package com.worktoken.engine.test.helpdesk;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
+import com.worktoken.model.EventToken;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,12 +61,18 @@ public class HelpDesk {
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("Definition".equals(tDefinitions.getId()));
 
-        long id = session.createProcess("process-com_worktoken_helpdesk");
-        Assert.assertTrue(id > 0);
+        long processId = session.createProcess("process-com_worktoken_helpdesk");
+        Assert.assertTrue(processId > 0);
 
-        HelpDeskProcess process = em.find(HelpDeskProcess.class, id);
+        HelpDeskProcess process = em.find(HelpDeskProcess.class, processId);
         Assert.assertNotNull(process);
         em.detach(process);
+        EventToken message = new EventToken();
+        message.getData().put("email", getEmail());
+        message.getData().put("subject", getSubject());
+        message.getData().put("question", getQuestion());
+        message.setDefinitionId("ID_21465726_5737_2200_2400_000000600032");
+        session.sendEventToken(message, processId);
 
         session.close();
         em.getTransaction().commit();
