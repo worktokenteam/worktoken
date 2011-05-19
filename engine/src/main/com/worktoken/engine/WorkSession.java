@@ -61,7 +61,7 @@ public interface WorkSession {
 
     public void dropDefinitions(final String id);
 
-    public BusinessProcess createProcess(final String id);
+    public long createProcess(final String id);
 
     public void sendEventToken(EventToken eventToken, BusinessProcess process);
 

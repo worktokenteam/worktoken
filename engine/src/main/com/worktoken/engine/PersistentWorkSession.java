@@ -43,13 +43,15 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     private long lastTriggerPollTime = 0L;
 
     // BPMN stuff
+    private AnnotationDictionary dictionary;
     private HashMap<String, TDefinitions> definitionsMap;
     private HashMap<String, ProcessDefinition> processDefinitions;
     private HashMap<String, MessageDefinition> messageDefinitions;
+    private long threadId;
 
     // =========================================================================================== PersistentWorkSession
 
-    protected PersistentWorkSession(String id, EntityManagerFactory emf) {
+    public PersistentWorkSession(String id, EntityManagerFactory emf, AnnotationDictionary dictionary) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Null or missing session id in PersistentWorkSession constructor");
         }
@@ -61,9 +63,19 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
         this.emf = emf;
         this.sessionId = id;
+        if (dictionary != null) {
+            this.dictionary = dictionary;
+        } else {
+            dictionary = new AnnotationDictionary() {
+                @Override
+                public void build() {
+                }
+            };
+            dictionary.setScanned(true);
+        }
         SessionRegistry.addSession(this);
         workItems = new LinkedBlockingQueue<WorkItem>();
-        executor = Executors.newFixedThreadPool(1);
+        executor = Executors.newFixedThreadPool(10);
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
         executor.execute(this);
@@ -128,6 +140,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     @Override
     public void run() {
         boolean interrupted = false;
+        threadId = Thread.currentThread().getId();
         while (!cancelled) {
             WorkItem workItem = null;
             try {
@@ -615,10 +628,98 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         getDefinitionsMap().remove(id);
     }
 
+    // ======================================================================================================== isRunner
+
+    private boolean isRunner() {
+        return Thread.currentThread().getId() == threadId;
+    }
+
+    // ========================================================================================================= persist
+
+    private void persist(final Object o) {
+        List<Object> list = new ArrayList<Object>();
+        list.add(o);
+        persistList(list);
+    }
+
+    // ===================================================================================================== persistList
+
+    private void persistList(final List<Object> entities) {
+        if (isRunner()) {
+            for (Object o : entities) {
+                em.get().persist(o);
+            }
+        } else {
+            final LinkedBlockingQueue<String> kicker = new LinkedBlockingQueue<String>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    beginTransaction();
+                    for (Object o : entities) {
+                        em.get().persist(o);
+                    }
+                    commitTransaction();
+                    releaseEntityManager();
+                    kicker.add("done");
+                }
+            });
+            try {
+                String result = null;
+                int retries = 40;
+                while (result == null && retries > 0) {
+                    --retries;
+                    result = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: and what now? no way to stop the Runnable. Rising exception here?
+                 */
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    // =========================================================================================================== merge
+
+    private Object merge(final Object o) {
+        if (isRunner()) {
+            return em.get().merge(o);
+        } else {
+            final LinkedBlockingQueue<Object> kicker = new LinkedBlockingQueue<Object>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    beginTransaction();
+                    Object mergedEntity = em.get().merge(o);
+                    commitTransaction();
+                    releaseEntityManager();
+                    kicker.add(mergedEntity);
+                }
+            });
+            try {
+                Object entity = null;
+                int retries = 40;
+                while (entity == null && retries > 0) {
+                    --retries;
+                    entity = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: and what now? no way to stop the Runnable. Rising exception here?
+                 */
+                return entity;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return null;
+    }
+
     // =================================================================================================== createProcess
 
     @Override
-    public BusinessProcess createProcess(String id) {
+    public long createProcess(String id) {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("Null or empty process id in call to createProcess");
         }
@@ -627,7 +728,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
         TProcess tProcess = getProcessDefinitions().get(id).getProcessDefinition();
         BusinessProcess process;
-        AnnotatedClass ac = getDictionary().findProcess(id, tProcess.getName());
+        AnnotatedClass ac = dictionary.findProcess(id, tProcess.getName());
         if (ac == null) {
             process = new BusinessProcess();
         } else {
@@ -645,7 +746,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         acquireEntityManager();
         process.setDefinitionId(id);
         process.setSessionId(getId());
-        em.get().persist(process);
+        persist(process);
         final List<TActivity> startActivities = new ArrayList<TActivity>();
         final List<TCatchEvent> noneStartEvents = new ArrayList<TCatchEvent>();
         final List<TCatchEvent> startEvents = new ArrayList<TCatchEvent>();
@@ -670,9 +771,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         for (TActivity activity : startActivities) {
             Node node = createNode(activity, process);
             node.tokenIn(new WorkToken(), null);
-            if (em.get().contains(node)) {
-                em.get().merge(node);
-            }
+            merge(node);
         }
         /*
             Only one start event will be triggered, if there is at least one None Start Event, it will be triggered,
@@ -682,21 +781,19 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             for (TCatchEvent start : startEvents) {
                 CatchEventNode node = (CatchEventNode) createNode(start, process);
                 node.setStartEvent(true);
-                if (em.get().contains(node)) {
-                    em.get().merge(node);
-                }
+                merge(node);
             }
         } else {
             CatchEventNode node = (CatchEventNode) createNode(noneStartEvents.get(0), process);
             node.eventIn(new EventToken());
             node.setStartEvent(true);
-            if (em.get().contains(node)) {
-                em.get().merge(node);
-            }
+            merge(node);
         }
-//        em.get().flush();
+        if (isRunner()) {
+            em.get().flush();   // we need to flush here to ensure the process instance id is not empty
+        }
         releaseEntityManager();
-        return process;
+        return process.getInstanceId();
     }
 
     // ====================================================================================================== createNode
@@ -705,44 +802,36 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (tNode instanceof TCatchEvent) {
             CatchEventNode node = createCatchEventNode((TCatchEvent) tNode, process, null);
             node.setSession(this);
-            acquireEntityManager();
-            em.get().persist(node);
-            releaseEntityManager();
+            persist(node);
             return node;
         }
         if (tNode instanceof TUserTask) {
             UserTask node = createUserTaskNode((TUserTask) tNode, process);
             node.setSession(this);
-            acquireEntityManager();
-            em.get().persist(node);
-            releaseEntityManager();
+            persist(node);
             return node;
         }
         if (tNode instanceof TBusinessRuleTask) {
             BusinessRuleTask node = createBusinessRuleTaskNode((TBusinessRuleTask) tNode, process);
             node.setSession(this);
-            acquireEntityManager();
-            em.get().persist(node);
-            releaseEntityManager();
+            persist(node);
             return node;
         }
         if (tNode instanceof TSendTask) {
             SendTask node = createSendTaskNode((TSendTask) tNode, process);
             node.setSession(this);
-            acquireEntityManager();
-            em.get().persist(node);
-            releaseEntityManager();
+            persist(node);
             return node;
         }
         if (tNode instanceof TEventBasedGateway) {
             EventBasedGateway node = createEventBasedGateway((TEventBasedGateway) tNode, process);
             node.setSession(this);
-            acquireEntityManager();
-            em.get().persist(node);
+            persist(node);
+// TODO: batch persist
+//            persistList(node.getTargets());
             for (Node target : node.getTargets()) {
-                em.get().persist(target);
+                persist(target);
             }
-            releaseEntityManager();
             return node;
         }
         if (tNode instanceof TExclusiveGateway) {
@@ -782,7 +871,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private ExclusiveGateway createExclusiveGateway(TExclusiveGateway tNode, BusinessProcess process) {
         ExclusiveGateway node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new ExclusiveGateway();
         } else {
@@ -816,7 +905,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private SendTask createSendTaskNode(TSendTask tNode, BusinessProcess process) {
         SendTask node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new SendTask();
         } else {
@@ -850,7 +939,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private BusinessRuleTask createBusinessRuleTaskNode(TBusinessRuleTask tNode, BusinessProcess process) {
         BusinessRuleTask node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new BusinessRuleTask();
         } else {
@@ -884,7 +973,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private UserTask createUserTaskNode(TUserTask tNode, BusinessProcess process) {
         UserTask node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new UserTask();
         } else {
@@ -924,7 +1013,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private CatchEventNode createCatchEventNode(TCatchEvent tNode, BusinessProcess process, EventValidator validator) {
         CatchEventNode node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new CatchEventNode();
         } else {
@@ -1009,7 +1098,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private EventBasedGateway createEventBasedGateway(TEventBasedGateway tNode, BusinessProcess process) {
         EventBasedGateway node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new EventBasedGateway();
         } else {
@@ -1077,7 +1166,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private ThrowEventNode createThrowEventNode(TThrowEvent tNode, BusinessProcess process) {
         ThrowEventNode node;
-        AnnotatedClass ac = getDictionary().findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new ThrowEventNode();
         } else {
@@ -1185,11 +1274,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         trigger.setExpression(timeExpression.getContent().get(0).toString());
         return trigger;
     }
-
-// TODO: add to constructor
-    protected AnnotationDictionary getDictionary() {
-        return null;
-    };
 
     // ======================================================================================= createMessageEventTrigger
 
