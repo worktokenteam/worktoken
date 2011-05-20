@@ -3,6 +3,7 @@ package com.worktoken.engine.test.helpdesk;
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.model.EventToken;
+import com.worktoken.model.EventTrigger;
 import com.worktoken.model.TaskState;
 import com.worktoken.model.UserTask;
 import org.junit.After;
@@ -124,6 +125,18 @@ public class HelpDesk {
          */
         logger.info("Waiting 2 seconds for the process to reach event based gateway node");
         Thread.sleep(2000);
+
+        /*
+        Verify gateway triggers
+         */
+        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
+        Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
+
+        for (EventTrigger trigger : triggers) {
+            em.detach(trigger);
+        }
+
+
 
 //        Thread.sleep(2000);
         logger.info("Closing session");

@@ -20,6 +20,8 @@ public class EventTrigger {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private long instanceId;
+    @Version
+    private long version;
     private String definitionId;
     @ManyToOne()
     private CatchEventNode eventNode;
