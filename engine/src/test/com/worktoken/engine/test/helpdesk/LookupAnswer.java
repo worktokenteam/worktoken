@@ -1,4 +1,4 @@
-package com.rushproject.helpdesk;
+package com.worktoken.engine.test.helpdesk;
 
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.annotation.RefType;
@@ -29,7 +29,7 @@ public class LookupAnswer extends BusinessRuleTask {
 
     private String lookup(String question) {
         // how are you?
-        if (question.matches("(?i)\\bhow\\s+are\\s+you\\?")) {
+        if (question.matches("(?i)how\\s+are\\s+you\\?")) {
             return "I am fine, thanks.";
         }
         return null;

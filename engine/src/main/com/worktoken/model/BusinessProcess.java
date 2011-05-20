@@ -44,7 +44,7 @@ public class BusinessProcess {
 //    }
 
     public void sendEventToken(EventToken eventToken) {
-        getSession().sendEventToken(eventToken, this);
+        getSession().sendEventToken(eventToken, getInstanceId());
     }
 
     public void setSessionId(String sessionId) {

@@ -50,9 +50,11 @@ public class HelpDesk {
 
         List<Class> annotatedClasses = new ArrayList<Class>();
         annotatedClasses.add(HelpDeskProcess.class);
+        annotatedClasses.add(LookupAnswer.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
         Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
+        Assert.assertNotNull(dictionary.findNodeByName("Lookup answer"));
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -68,12 +70,14 @@ public class HelpDesk {
         Assert.assertNotNull(process);
         em.detach(process);
         EventToken message = new EventToken();
-        message.getData().put("email", getEmail());
-        message.getData().put("subject", getSubject());
-        message.getData().put("question", getQuestion());
+        message.getData().put("email", "customer@example.com");
+        message.getData().put("subject", "My question");
+        message.getData().put("question", "What's up?");
         message.setDefinitionId("ID_21465726_5737_2200_2400_000000600032");
         session.sendEventToken(message, processId);
 
+
+        Thread.sleep(5000);
         session.close();
         em.getTransaction().commit();
         em.close();

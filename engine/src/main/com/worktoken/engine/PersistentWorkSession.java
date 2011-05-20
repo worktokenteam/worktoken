@@ -242,7 +242,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 EventToken token = new EventToken();
                 token.setTriggerInstanceId(trigger.getInstanceId());
                 e4n.setEventToken(token);
-                offer(e4n);
+                workItems.add(e4n);
             }
             em.get().flush();
             commitTransaction();
@@ -338,14 +338,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         return false;
     }
 
-    // =========================================================================================================== offer
-
-    private void offer(WorkItem item) {
-        acquireEntityManager();
-        em.get().flush();
-        workItems.offer(item);
-        releaseEntityManager();
-    }
     // =========================================================================== sendToken(token, fromNode, connector)
 
     @Override
@@ -357,7 +349,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
         tokenFromNode.setNodeId(fromNode.getNodeId());
         tokenFromNode.setConnector(connector);
-        offer(tokenFromNode);
+        workItems.add(tokenFromNode);
     }
 
     // ============================================================================================= handleTokenFromNode
@@ -408,7 +400,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             }
             source.setProcess(null);
         }
-        offer(t4n);
+        workItems.add(t4n);
         releaseEntityManager();
     }
 
@@ -468,7 +460,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         tokenFromNode.setProcessInstanceId(process.getInstanceId());
         tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
         tokenFromNode.setNodeId(fromNode.getNodeId());
-        offer(tokenFromNode);
+        workItems.add(tokenFromNode);
     }
 
     // =========================================================================================================== close
@@ -530,6 +522,11 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 //        acquireEntityManager(); // we were called from runner, thus all persistence stuff is in place already
         BusinessProcess process = em.get().find(BusinessProcess.class, eventIn.getProcessInstanceId());
         EventToken token = eventIn.getEventToken();
+        /*
+        We must find the trigger (it is a previously persisted entity). For timer triggers event token already keeps
+        the entity id, because timer events are fired by polling the triggers. Message events are different,
+        they provide definition id and we have to run query against the database.
+         */
         EventTrigger trigger;
         if (token.getTriggerInstanceId() != 0) {
             trigger = em.get().find(EventTrigger.class, token.getTriggerInstanceId());
@@ -544,6 +541,10 @@ public class PersistentWorkSession implements WorkSession, Runnable {
              */
             CatchEventNode node = trigger.getEventNode();
             node.eventIn(eventIn.getEventToken());
+            /*
+            Catch event object may change after eventIn(), so we do merge. Since we may safely assume that we are in the
+            engine thread, we use Entity Manager directly.
+             */
             if (em.get().contains(node)) {
                 trigger.setEventNode(em.get().merge(node));
             }
@@ -558,7 +559,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         EventIn eventIn = new EventIn();
         eventIn.setProcessInstanceId(processId);
         eventIn.setEventToken(eventToken);
-        offer(eventIn);
+        workItems.add(eventIn);
     }
 
     // ================================================================================================= readDefinitions
