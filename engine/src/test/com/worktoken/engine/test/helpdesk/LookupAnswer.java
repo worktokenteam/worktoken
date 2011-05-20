@@ -7,6 +7,9 @@ import com.worktoken.model.Connector;
 import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
+import java.util.logging.Logger;
+
+import org.junit.Assert;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
@@ -14,6 +17,7 @@ import javax.persistence.Entity;
 @Entity
 @FlowElement(nodeRef = "Lookup answer", refType = RefType.Name, processId = "process-com_worktoken_helpdesk")
 public class LookupAnswer extends BusinessRuleTask {
+
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
         String answer = lookup((String) token.getData().get("question"));
@@ -28,9 +32,11 @@ public class LookupAnswer extends BusinessRuleTask {
     }
 
     private String lookup(String question) {
-        // how are you?
-        if (question.matches("(?i)how\\s+are\\s+you\\?")) {
-            return "I am fine, thanks.";
+        if (question != null && !question.isEmpty()) {
+            // how are you?
+            if (question.matches("(?i)how\\s+are\\s+you\\?")) {
+                return "I am fine, thanks.";
+            }
         }
         return null;
     }

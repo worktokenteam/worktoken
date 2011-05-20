@@ -3,6 +3,8 @@ package com.worktoken.engine.test.helpdesk;
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.model.EventToken;
+import com.worktoken.model.TaskState;
+import com.worktoken.model.UserTask;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -51,10 +53,14 @@ public class HelpDesk {
         List<Class> annotatedClasses = new ArrayList<Class>();
         annotatedClasses.add(HelpDeskProcess.class);
         annotatedClasses.add(LookupAnswer.class);
+        annotatedClasses.add(ReceiveRequest.class);
+        annotatedClasses.add(PrepareAnswer.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
         Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
         Assert.assertNotNull(dictionary.findNodeByName("Lookup answer"));
+        Assert.assertNotNull(dictionary.findNodeByName("Prepare answer"));
+        Assert.assertNotNull(dictionary.findNodeByName("Receive request"));
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
@@ -63,23 +69,68 @@ public class HelpDesk {
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("Definition".equals(tDefinitions.getId()));
 
+        /*
+        Create process instance. We retrieve the process entity from database for verification purposes. After
+        verification the entity must be detached, otherwise we will have stale version of the object pretty soon.
+         */
         long processId = session.createProcess("process-com_worktoken_helpdesk");
         Assert.assertTrue(processId > 0);
-
         HelpDeskProcess process = em.find(HelpDeskProcess.class, processId);
         Assert.assertNotNull(process);
         em.detach(process);
+
+        /*
+        Sending "Service request" message. Please note that definition it is the one of the message, not the event
+        trigger.
+         */
         EventToken message = new EventToken();
+        String subject = "My question";
         message.getData().put("email", "customer@example.com");
-        message.getData().put("subject", "My question");
+        message.getData().put("subject", subject);
         message.getData().put("question", "What's up?");
         message.setDefinitionId("ID_21465726_5737_2200_2400_000000600032");
         session.sendEventToken(message, processId);
 
+        /*
+        Wait a couple of seconds for the process to reach User Task node (Prepare Answer)
+         */
+        logger.info("Waiting 2 seconds for the process to reach Prepare Answer node");
+        Thread.sleep(2000);
 
-        Thread.sleep(5000);
+        /*
+        Are the there yet?
+         */
+        logger.info("Verifying Prepare Answer node");
+        List<UserTask> userTasks = em.createQuery("SELECT task FROM UserTask task WHERE task.process.instanceId = :id").setParameter("id", processId).getResultList();
+        Assert.assertTrue(userTasks.size() == 1);
+        Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
+        PrepareAnswer userTask = (PrepareAnswer) userTasks.get(0);
+        /*
+        IMPORTANT: do not forget to detach the user task, otherwise we will have stale entity soon.
+         */
+        em.detach(userTask);
+        Assert.assertTrue(subject.equals(userTask.getSubject()));
+        Assert.assertTrue(userTask.getTaskState() == TaskState.Created);
+
+        /*
+        Post answer and complete user task
+         */
+        logger.info("Posting answer and completing the Prepare Answer task");
+        userTask.setAnswer("I am fine, thanks.");
+        userTask.complete();
+
+        /*
+        Wait a couple of seconds for the process to reach event based gateway node
+         */
+        logger.info("Waiting 2 seconds for the process to reach event based gateway node");
+        Thread.sleep(2000);
+
+//        Thread.sleep(2000);
+        logger.info("Closing session");
         session.close();
+        logger.info("Committing application transaction. Nothing should ever happen...");
         em.getTransaction().commit();
+        logger.info("Closing Entity Manager");
         em.close();
     }
 }

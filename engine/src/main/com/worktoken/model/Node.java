@@ -19,8 +19,10 @@ import javax.persistence.*;
 public abstract class Node {
     @Id @GeneratedValue(strategy = GenerationType.TABLE)
     private long instanceId;
+    @Version
+    private long version;
     private String nodeId;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     private BusinessProcess process;
     @Transient
     private WorkSession session;

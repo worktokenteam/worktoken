@@ -540,7 +540,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 multiple start event nodes.
              */
             CatchEventNode node = trigger.getEventNode();
-            node.eventIn(eventIn.getEventToken());
+            node.eventIn(token);
             /*
             Catch event object may change after eventIn(), so we do merge. Since we may safely assume that we are in the
             engine thread, we use Entity Manager directly.
