@@ -39,7 +39,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     private Executor executor;
     private volatile boolean cancelled;
     private LinkedBlockingQueue<WorkItem> workItems;
-    private static final long TriggerPollCycle = 60000L;
+    private static long TriggerPollCycle = 60000L;
     private long lastTriggerPollTime = 0L;
 
     // BPMN stuff
@@ -1440,4 +1440,11 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         return null;
     }
 
+    public static long getTriggerPollCycle() {
+        return TriggerPollCycle;
+    }
+
+    public static void setTriggerPollCycle(long triggerPollCycle) {
+        TriggerPollCycle = triggerPollCycle;
+    }
 }

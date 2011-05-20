@@ -2,10 +2,7 @@ package com.worktoken.engine.test.helpdesk;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
-import com.worktoken.model.EventToken;
-import com.worktoken.model.EventTrigger;
-import com.worktoken.model.TaskState;
-import com.worktoken.model.UserTask;
+import com.worktoken.model.*;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +15,7 @@ import javax.persistence.Persistence;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -65,6 +63,7 @@ public class HelpDesk {
 
         EntityManager em = emf.createEntityManager();
         em.getTransaction().begin();
+        PersistentWorkSession.setTriggerPollCycle(5000L); // poll triggers every 5 seconds
         session = new PersistentWorkSession("com.worktoken.TestSession", emf, dictionary);
         TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helpdesk.bpmn"));
         Assert.assertNotNull(tDefinitions);
@@ -129,6 +128,7 @@ public class HelpDesk {
         /*
         Verify gateway triggers
          */
+        logger.info("Verifying gateway triggers");
         List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
 
@@ -136,6 +136,20 @@ public class HelpDesk {
             em.detach(trigger);
         }
 
+        /*
+        Adjust timer alarm time to ensure it is ready to be fired.
+         */
+        logger.info("Adjusting timer alarm time to ensure it is ready to be fired");
+        TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getSingleResult();
+        timer.setNextAlarm(new Date());
+        em.merge(timer);
+        em.flush();
+        em.detach(timer);
+        logger.info("Waiting 6 seconds for the timer to fire, this should end the process");
+        Thread.sleep(6000);
+
+        logger.info("Verifying process termination");
+        Assert.assertNull(em.find(HelpDeskProcess.class, processId));
 
 
 //        Thread.sleep(2000);

@@ -15,6 +15,8 @@ public class BusinessProcess {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
     private long instanceId;
+    @Version
+    private long version;
     private String definitionId;
     private String sessionId;
 //    @OneToMany(mappedBy = "process", fetch = FetchType.LAZY)
