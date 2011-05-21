@@ -16,10 +16,7 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 
 /**
@@ -36,7 +33,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     private ThreadLocal<Integer> acquireCounter;
 
     // runner thread stuff
-    private Executor executor;
+    private ExecutorService executor;
+    Future<?> future;
     private volatile boolean cancelled;
     private LinkedBlockingQueue<WorkItem> workItems;
     private static long TriggerPollCycle = 60000L;
@@ -78,7 +76,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         executor = Executors.newFixedThreadPool(10);
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
-        executor.execute(this);
+        future = executor.submit((Runnable)this);
     }
 
     // =========================================================================================================== getId
@@ -220,6 +218,12 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (interrupted) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    // ======================================================================================================= isRunning
+
+    public boolean isRunning() {
+        return future.isDone() ? false : true;
     }
 
     // ====================================================================================================== fireTimers
