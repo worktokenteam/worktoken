@@ -228,26 +228,30 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (System.currentTimeMillis() - lastTriggerPollTime > TriggerPollCycle) {
             acquireEntityManager();
             beginTransaction();
+            System.out.println("polling timers");
             List<TimerTrigger> triggers = em.get().createNamedQuery("TimerTrigger.findAlerts").setParameter("date", new Date()).getResultList();
-            for (TimerTrigger trigger : triggers) {
-                /*
-                we do not care for repeat (cycle) events for now, each timer trigger fired once or never.
-                First thing we should do is to disarm trigger, to avoid false alarms
-                 */
-                trigger.disarm();
-                EventIn e4n = new EventIn();
-                BusinessProcess process = trigger.getEventNode().getProcess();
-                e4n.setProcessInstanceId(process.getInstanceId());
-                e4n.setProcessDefinitionId(process.getDefinitionId());
-                EventToken token = new EventToken();
-                token.setTriggerInstanceId(trigger.getInstanceId());
-                e4n.setEventToken(token);
-                workItems.add(e4n);
+            System.out.println("Fired timers cnt=" + triggers.size());
+            try {
+                for (TimerTrigger trigger : triggers) {
+                    /*
+                   we do not care for repeat (cycle) events for now, each timer trigger fired once or never.
+                   First thing we should do is to disarm trigger, to avoid false alarms
+                    */
+                    trigger.disarm();
+                    EventIn eventIn = new EventIn();
+                    BusinessProcess process = trigger.getEventNode().getProcess();
+                    eventIn.setProcessInstanceId(process.getInstanceId());
+                    eventIn.setProcessDefinitionId(process.getDefinitionId());
+                    EventToken token = new EventToken();
+                    token.setTriggerInstanceId(trigger.getInstanceId());
+                    eventIn.setEventToken(token);
+                    workItems.add(eventIn);
+                }
+            } finally {
+                commitTransaction();
+                releaseEntityManager();
+                lastTriggerPollTime = System.currentTimeMillis();
             }
-            em.get().flush();
-            commitTransaction();
-            releaseEntityManager();
-            lastTriggerPollTime = System.currentTimeMillis();
         }
     }
 

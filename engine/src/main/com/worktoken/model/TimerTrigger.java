@@ -11,7 +11,7 @@ import java.util.Date;
  */
 @Entity
 @NamedQueries(
-    @NamedQuery(name = "TimerTrigger.findAlerts", query = "SELECT t FROM TimerTrigger t WHERE t.armed = TRUE AND t.nextAlarm < :date ")
+    @NamedQuery(name = "TimerTrigger.findAlerts", query = "SELECT t FROM TimerTrigger t WHERE t.armed = TRUE AND t.nextAlarm <= :date ")
 )
 public class TimerTrigger extends EventTrigger {
     String expression;

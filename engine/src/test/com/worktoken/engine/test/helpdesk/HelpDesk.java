@@ -141,23 +141,25 @@ public class HelpDesk {
          */
         logger.info("Adjusting timer alarm time to ensure it is ready to be fired");
         TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getSingleResult();
-        timer.setNextAlarm(new Date());
+        timer.setNextAlarm(new Date(0L));
         em.merge(timer);
         em.flush();
         em.detach(timer);
+        logger.info("Committing application transaction. Nothing should ever happen...");
+        em.getTransaction().commit();
+        logger.info("Closing Entity Manager");
+        em.close();
         logger.info("Waiting 6 seconds for the timer to fire, this should end the process");
         Thread.sleep(6000);
 
         logger.info("Verifying process termination");
+        em = emf.createEntityManager();
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));
+        em.close();
 
 
 //        Thread.sleep(2000);
         logger.info("Closing session");
         session.close();
-        logger.info("Committing application transaction. Nothing should ever happen...");
-        em.getTransaction().commit();
-        logger.info("Closing Entity Manager");
-        em.close();
     }
 }
