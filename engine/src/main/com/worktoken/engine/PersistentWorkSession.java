@@ -228,9 +228,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (System.currentTimeMillis() - lastTriggerPollTime > TriggerPollCycle) {
             acquireEntityManager();
             beginTransaction();
-            System.out.println("polling timers");
             List<TimerTrigger> triggers = em.get().createNamedQuery("TimerTrigger.findAlerts").setParameter("date", new Date()).getResultList();
-            System.out.println("Fired timers cnt=" + triggers.size());
             try {
                 for (TimerTrigger trigger : triggers) {
                     /*
