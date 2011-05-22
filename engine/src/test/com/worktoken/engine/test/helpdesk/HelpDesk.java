@@ -215,7 +215,7 @@ public class HelpDesk {
         logger.info("Waiting 2 seconds for the process to reach event based gateway node");
         Thread.sleep(2000);
 
-        System.out.println("Verifying gateway triggers");
+        System.out.println("\n====================== Verifying gateway triggers =========================\n");
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
         List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
@@ -224,7 +224,7 @@ public class HelpDesk {
 
 // TODO: receive confirmation message
 
-        logger.info("Verifying process termination");
+        System.out.println("\n====================== Verifying process termination =========================\n");
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));
