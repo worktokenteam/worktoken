@@ -14,7 +14,10 @@ import javax.persistence.*;
         @NamedQuery(name = "Node.findByProcess",
                     query = "SELECT n FROM Node n WHERE n.process = :process"),
         @NamedQuery(name = "Node.findByDefIdAndProcess",
-                    query = "SELECT n FROM Node n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM Node n WHERE n.nodeId = :defId AND n.process = :process"),
+        @NamedQuery(name = "Node.countByProcess",
+                    query =  "SELECT COUNT(n) FROM Node n WHERE n.process = :process")
+
 })
 public abstract class Node {
     @Id @GeneratedValue(strategy = GenerationType.TABLE)

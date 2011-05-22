@@ -163,10 +163,10 @@ public class HelpDesk {
         em.getTransaction().commit();
         System.out.println("Closing Entity Manager");
         em.close();
-        System.out.println("Waiting 6 seconds for the timer to fire, this should end the process");
+        System.out.println("\n==================== Waiting 6 seconds for the timer to fire, this should end the process ======================\n");
         Thread.sleep(6000);
 
-        System.out.println("Verifying process termination");
+        System.out.println("\n==================== Verifying process termination =================================\n");
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));

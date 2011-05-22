@@ -76,7 +76,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         executor = Executors.newFixedThreadPool(10);
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
-        future = executor.submit((Runnable)this);
+        future = executor.submit((Runnable) this);
     }
 
     // =========================================================================================================== getId
@@ -316,7 +316,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             cleanUpStartNodes(process);
         }
         // TODO: no need to run full fledged select query, all we need here is just COUNT
-        if (findNodes(process).isEmpty()) {
+        Long count = (Long) em.get().createNamedQuery("Node.countByProcess").setParameter("process", process).getSingleResult();
+        if (count == 0) {
             return true;
         }
         return false;
@@ -393,12 +394,18 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 CatchEventNode eventNode = (CatchEventNode) source;
                 if (eventNode.isStartEvent()) {
                     cleanUpStartNodes(source.getProcess());
-                } else if (eventNode.getAttachedTo() != null) {
-                    if (eventNode.getAttachedTo() instanceof EventBasedGateway) {
-                        handleGatewayEvent((EventBasedGateway) eventNode.getAttachedTo(), eventNode);
+                } else if (eventNode.getOwnerId() != 0) {
+                    EventBasedGateway gateway =
+                    Node owner = em.get().find(Node.class, eventNode.getOwnerId());
+                    if (owner != null) {
+                        if (owner instanceof EventBasedGateway) {
+                            handleGatewayEvent((EventBasedGateway) owner, eventNode);
+                        } else {
+                            // TODO: implement processing of boundary events
+                            throw new IllegalStateException("Not implemented yet");
+                        }
                     } else {
-                        // TODO: implement processing of boundary events
-                        throw new IllegalStateException("Not implemented yet");
+                        throw new IllegalStateException("Owner node for catch event " + eventNode.getNodeId() + " does not exist");
                     }
                 }
             } else {
@@ -419,7 +426,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      * @param eventNode - target node entity (either catch event or receive task)
      */
     private void handleGatewayEvent(EventBasedGateway gateway, Node eventNode) {
-        acquireEntityManager();
+        assert isRunner();
+//        acquireEntityManager();
         // delete event node (token is already out)
         if (em.get().contains(eventNode)) {
             em.get().remove(eventNode);
@@ -429,10 +437,10 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             /*
             if exclusive gateway, delete all other target nodes
              */
-            for (CatchEventNode catchEventNode : (List<CatchEventNode>) em.get().createNamedQuery("CatchEventNode.findAttached").setParameter("node", gateway).getResultList()) {
+            for (CatchEventNode catchEventNode : (List<CatchEventNode>) em.get().createNamedQuery("CatchEventNode.findAttached").setParameter("nodeId", gateway.getInstanceId()).getResultList()) {
                 em.get().remove(catchEventNode);
             }
-            for (ReceiveTask receiveTask : (List<ReceiveTask>) em.get().createNamedQuery("ReceiveTask.findAttached").setParameter("node", gateway).getResultList()) {
+            for (ReceiveTask receiveTask : (List<ReceiveTask>) em.get().createNamedQuery("ReceiveTask.findAttached").setParameter("nodeId", gateway.getInstanceId()).getResultList()) {
                 em.get().remove(receiveTask);
             }
             /*
@@ -445,15 +453,15 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             /*
             if parallel gateway, delete it only if no targets remaining
              */
-            Long targetCount = (Long) em.get().createNamedQuery("CatchEventNode.countAttached").setParameter("node", gateway).getSingleResult();
-            targetCount += (Long) em.get().createNamedQuery("ReceiveTask.countAttached").setParameter("node", gateway).getSingleResult();
+            Long targetCount = (Long) em.get().createNamedQuery("CatchEventNode.countAttached").setParameter("nodeId", gateway.getInstanceId()).getSingleResult();
+            targetCount += (Long) em.get().createNamedQuery("ReceiveTask.countAttached").setParameter("nodeId", gateway.getInstanceId()).getSingleResult();
             if (targetCount == 0) {
                 if (em.get().contains(gateway)) {
                     em.get().remove(gateway);
                 }
             }
         }
-        releaseEntityManager();
+//        releaseEntityManager();
     }
 
     // ====================================================================================== sendToken(token, fromNode)
@@ -838,6 +846,11 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 // TODO: batch persist
 //            persistList(node.getTargets());
             for (Node target : node.getTargets()) {
+                if (target instanceof CatchEventNode) {
+                    ((CatchEventNode) target).setOwnerId(node.getInstanceId());
+                } else if (target instanceof ReceiveTask) {
+                    ((ReceiveTask) target).setOwnerId(node.getInstanceId());
+                }
                 persist(target);
             }
             return node;
@@ -1150,7 +1163,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 // TODO: create createReceiveTask()
             } else if (tFlowNode instanceof TIntermediateCatchEvent) {
                 CatchEventNode catchEventNode = createCatchEventNode((TCatchEvent) tFlowNode, process, validator);
-                catchEventNode.setAttachedTo(node);
                 node.getTargets().add(catchEventNode);
             }
         }

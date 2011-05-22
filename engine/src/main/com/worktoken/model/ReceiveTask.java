@@ -17,19 +17,18 @@ import javax.persistence.NamedQuery;
         @NamedQuery(name = "ReceiveTask.findStartNodesByProcess",
                     query = "SELECT n FROM ReceiveTask n WHERE n.process = :process AND n.startEvent = true"),
         @NamedQuery(name = "ReceiveTask.findAttached",
-                    query =  "SELECT n FROM ReceiveTask n WHERE n.attachedTo = :node"),
+                    query =  "SELECT n FROM ReceiveTask n WHERE n.ownerId = :nodeId"),
         @NamedQuery(name = "ReceiveTask.deleteAttached",
-                    query =  "DELETE FROM ReceiveTask n WHERE n.attachedTo = :node"),
+                    query =  "DELETE FROM ReceiveTask n WHERE n.ownerId = :nodeId"),
         @NamedQuery(name = "ReceiveTask.countAttached",
-                    query =  "SELECT COUNT(n) FROM ReceiveTask n WHERE n.attachedTo = :node")
+                    query =  "SELECT COUNT(n) FROM ReceiveTask n WHERE n.ownerId = :nodeId")
 })
 public class ReceiveTask extends Node {
 
     private boolean startEvent;
 //    @OneToMany(mappedBy = "eventNode", cascade = CascadeType.ALL)
 //    private Set<EventTrigger> triggers;
-    @ManyToOne
-    private Node attachedTo;
+    private long ownerId;
 
     public boolean isStartEvent() {
         return startEvent;
@@ -55,11 +54,11 @@ public class ReceiveTask extends Node {
 //        return triggers;
 //    }
 
-    public Node getAttachedTo() {
-        return attachedTo;
+    public long getOwnerId() {
+        return ownerId;
     }
 
-    public void setAttachedTo(Node attachedTo) {
-        this.attachedTo = attachedTo;
+    public void setOwnerId(long ownerId) {
+        this.ownerId = ownerId;
     }
 }

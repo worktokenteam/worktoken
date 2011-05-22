@@ -16,11 +16,11 @@ import java.util.Set;
         @NamedQuery(name = "CatchEventNode.findStartNodesByProcess",
                     query = "SELECT n FROM CatchEventNode n WHERE n.process = :process AND n.startEvent = true"),
         @NamedQuery(name = "CatchEventNode.findAttached",
-                    query =  "SELECT n FROM CatchEventNode n WHERE n.attachedTo = :node"),
+                    query =  "SELECT n FROM CatchEventNode n WHERE n.ownerId = :nodeId"),
         @NamedQuery(name = "CatchEventNode.deleteAttached",
-                    query =  "DELETE FROM CatchEventNode n WHERE n.attachedTo = :node"),
+                    query =  "DELETE FROM CatchEventNode n WHERE n.ownerId = :nodeId"),
         @NamedQuery(name = "CatchEventNode.countAttached",
-                    query =  "SELECT COUNT(n) FROM CatchEventNode n WHERE n.attachedTo = :node")
+                    query =  "SELECT COUNT(n) FROM CatchEventNode n WHERE n.ownerId = :nodeId")
 })
 public class CatchEventNode extends Node {
 
@@ -29,8 +29,7 @@ public class CatchEventNode extends Node {
     private boolean startEvent;
     @OneToMany(mappedBy = "eventNode", cascade = CascadeType.ALL)
     private Set<EventTrigger> triggers;
-    @ManyToOne
-    private Node attachedTo;
+    private long ownerId;
 
     public boolean isStartEvent() {
         return startEvent;
@@ -56,11 +55,11 @@ public class CatchEventNode extends Node {
         return triggers;
     }
 
-    public Node getAttachedTo() {
-        return attachedTo;
+    public long getOwnerId() {
+        return ownerId;
     }
 
-    public void setAttachedTo(Node attachedTo) {
-        this.attachedTo = attachedTo;
+    public void setOwnerId(long ownerId) {
+        this.ownerId = ownerId;
     }
 }
