@@ -16,7 +16,9 @@ import javax.persistence.*;
         @NamedQuery(name = "Node.findByDefIdAndProcess",
                     query = "SELECT n FROM Node n WHERE n.nodeId = :defId AND n.process = :process"),
         @NamedQuery(name = "Node.countByProcess",
-                    query =  "SELECT COUNT(n) FROM Node n WHERE n.process = :process")
+                    query =  "SELECT COUNT(n) FROM Node n WHERE n.process = :process"),
+        @NamedQuery(name = "Node.className",
+                    query = "SELECT className FROM Node n WHERE n.instanceId = :id")
 
 })
 public abstract class Node {
@@ -25,6 +27,7 @@ public abstract class Node {
     @Version
     private long version;
     private String nodeId;
+    private String className;
     @ManyToOne(fetch = FetchType.EAGER)
     private BusinessProcess process;
     @Transient
@@ -88,4 +91,11 @@ public abstract class Node {
         getSession().sendToken(token, this, connector);
     }
 
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
 }

@@ -223,7 +223,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     // ======================================================================================================= isRunning
 
     public boolean isRunning() {
-        return future.isDone() ? false : true;
+        return !future.isDone();
     }
 
     // ====================================================================================================== fireTimers
@@ -232,6 +232,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (System.currentTimeMillis() - lastTriggerPollTime > TriggerPollCycle) {
             acquireEntityManager();
             beginTransaction();
+            @SuppressWarnings("unchecked")
             List<TimerTrigger> triggers = em.get().createNamedQuery("TimerTrigger.findAlerts").setParameter("date", new Date()).getResultList();
             try {
                 for (TimerTrigger trigger : triggers) {
@@ -315,12 +316,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         } else {
             cleanUpStartNodes(process);
         }
-        // TODO: no need to run full fledged select query, all we need here is just COUNT
         Long count = (Long) em.get().createNamedQuery("Node.countByProcess").setParameter("process", process).getSingleResult();
-        if (count == 0) {
-            return true;
-        }
-        return false;
+        return count == 0;
     }
 
     // ================================================================================================ isTerminateEvent
@@ -339,10 +336,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     // ====================================================================================================== isEndEvent
 
     private boolean isEndEvent(TFlowNode flowNode) {
-        if (flowNode.getOutgoing().isEmpty()) {
-            return true;
-        }
-        return false;
+        return flowNode.getOutgoing().isEmpty();
     }
 
     // =========================================================================== sendToken(token, fromNode, connector)
@@ -395,8 +389,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 if (eventNode.isStartEvent()) {
                     cleanUpStartNodes(source.getProcess());
                 } else if (eventNode.getOwnerId() != 0) {
-                    EventBasedGateway gateway =
-                    Node owner = em.get().find(Node.class, eventNode.getOwnerId());
+                    Node owner = getNode(eventNode.getOwnerId());
                     if (owner != null) {
                         if (owner instanceof EventBasedGateway) {
                             handleGatewayEvent((EventBasedGateway) owner, eventNode);
@@ -417,7 +410,32 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         releaseEntityManager();
     }
 
-    // ============================================================================================== handleGatewayEvent
+    // ========================================================================================================= getNode
+
+    private Node getNode(long id) {
+        String className = (String) em.get().createNamedQuery("Node.className").setParameter("id", id).getSingleResult();
+        if (className != null && !className.isEmpty()) {
+            try {
+                Class clazz = Class.forName(className);
+                @SuppressWarnings({"unchecked"})
+                Object entity = em.get().find(clazz, id);
+                if (entity == null) {
+                    throw new IllegalStateException("Node id:" + id + " is not an instance of " + className);
+                }
+                if (entity instanceof Node) {
+                    return (Node) entity;
+                }
+                throw new IllegalStateException("Object of class " + className + " with id:" + id + " is not a subclass of " + Node.class.getName());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                throw new IllegalStateException("Can't instantiate Class " + className);
+            }
+        } else {
+            throw new IllegalStateException("No class name for node or node id:" + id + " not found");
+        }
+    }
+
+        // ============================================================================================== handleGatewayEvent
 
     /**
      * Handles event caught by one of the target nodes of event based gateway
@@ -526,7 +544,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     @Override
     public void sendTokens(Map<Connector, WorkToken> tokens) {
-        //To change body of implemented methods use File | Settings | File Templates.
+       // TODO: implement
+       throw new IllegalStateException("Not implemented");
     }
 
     // ================================================================================================ handleEventToken
@@ -581,8 +600,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     /**
      * Reads BPMN definitions from InputStream
      *
-     * @param stream
-     * @return
+     * @param stream - BPMN definition input stream
+     * @return  initialized TDefinitions data structure
      */
     @Override
     public TDefinitions readDefinitions(InputStream stream) throws JAXBException {
@@ -858,25 +877,23 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (tNode instanceof TExclusiveGateway) {
             ExclusiveGateway node = createExclusiveGateway((TExclusiveGateway) tNode, process);
             node.setSession(this);
-//            acquireEntityManager();
-//            em.get().persist(node);
-//            releaseEntityManager();
+            // do not persist
             return node;
         }
         if (tNode instanceof TThrowEvent) {
             ThrowEventNode node = createThrowEventNode((TThrowEvent) tNode, process);
             node.setSession(this);
-            //
-            // There is no need to persist Throw Event Nodes
-//            acquireEntityManager();
-//            process.getNodes().add(node);
-//            em.get().persist(node);
-//            releaseEntityManager();
+            // do not persist
             return node;
         }
         throw new IllegalArgumentException("Unknown or unsupported node type: process=\"" + process.getDefinitionId() +
                 "\", node(id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\")");
     }
+
+    private Class<? extends Node> instantiateNode(Class<? extends TFlowNode> tNode, Class<? extends Node> nClass, BusinessProcess process) {
+
+    }
+
 
     // ========================================================================================== createExclusiveGateway
 
@@ -895,6 +912,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new ExclusiveGateway();
+            node.setClassName(ExclusiveGateway.class.getName());
         } else {
             Object entity;
             try {
@@ -906,6 +924,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated send task class " + ac.getClazz() + " does not extend ExclusiveGateway class");
             }
             node = (ExclusiveGateway) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -929,6 +948,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new SendTask();
+            node.setClassName(SendTask.class.getName());
         } else {
             Object entity;
             try {
@@ -940,6 +960,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated send task class " + ac.getClazz() + " does not extend SendTask class");
             }
             node = (SendTask) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -963,6 +984,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new BusinessRuleTask();
+            node.setClassName(BusinessRuleTask.class.getName());
         } else {
             Object entity;
             try {
@@ -974,6 +996,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated business rule task class " + ac.getClazz() + " does not extend BusinessRuleTask class");
             }
             node = (BusinessRuleTask) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -997,6 +1020,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new UserTask();
+            node.setClassName(UserTask.class.getName());
         } else {
             Object entity;
             try {
@@ -1008,6 +1032,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated user task class " + ac.getClazz() + " does not extend UserTask class");
             }
             node = (UserTask) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -1037,6 +1062,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new CatchEventNode();
+            node.setClassName(CatchEventNode.class.getName());
         } else {
             Object entity;
             try {
@@ -1048,6 +1074,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated catch event class " + ac.getClazz() + " does not extend CatchEventNode class");
             }
             node = (CatchEventNode) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -1122,6 +1149,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new EventBasedGateway();
+            node.setClassName(EventBasedGateway.class.getName());
         } else {
             Object entity;
             try {
@@ -1133,6 +1161,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated catch event class " + ac.getClazz() + " does not extend EventBasedGateway class");
             }
             node = (EventBasedGateway) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
@@ -1189,6 +1218,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
             node = new ThrowEventNode();
+            node.setClassName(ThrowEventNode.class.getName());
         } else {
             Object entity;
             try {
@@ -1200,6 +1230,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Annotated throw event class " + ac.getClazz() + " does not extend ThrowEventNode class");
             }
             node = (ThrowEventNode) entity;
+            node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
