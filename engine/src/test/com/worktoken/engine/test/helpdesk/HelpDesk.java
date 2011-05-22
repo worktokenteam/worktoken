@@ -21,7 +21,6 @@ import java.util.logging.Logger;
  */
 public class HelpDesk {
 
-    private Logger logger = Logger.getLogger(HelpDesk.class.getName());
     private Connection connection;
     private EntityManagerFactory emf;
     private PersistentWorkSession session;
@@ -32,7 +31,7 @@ public class HelpDesk {
         /*
         Start database and create entity manager factory
          */
-        logger.info("Starting in-memory HSQL database for unit tests");
+        System.out.println("Starting in-memory HSQL database for unit tests");
         Class.forName("org.hsqldb.jdbcDriver");
         connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
         emf = Persistence.createEntityManagerFactory("testPU");
@@ -46,6 +45,7 @@ public class HelpDesk {
         annotatedClasses.add(ReceiveRequest.class);
         annotatedClasses.add(PrepareAnswer.class);
         annotatedClasses.add(SendAnswer.class);
+        annotatedClasses.add(ReceiveConfirmation.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
         Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
@@ -53,6 +53,7 @@ public class HelpDesk {
         Assert.assertNotNull(dictionary.findNodeByName("Prepare answer"));
         Assert.assertNotNull(dictionary.findNodeByName("Receive request"));
         Assert.assertNotNull(dictionary.findNodeByName("Send answer"));
+        Assert.assertNotNull(dictionary.findNodeById("com_worktoken_helpdesk_1_55"));
 
         /*
         Create work session and load process definition
@@ -70,7 +71,7 @@ public class HelpDesk {
         if (emf != null) {
             emf.close();
         }
-        logger.info("Stopping in-memory HSQL database.");
+        System.out.println("Stopping in-memory HSQL database.");
         connection.createStatement().execute("SHUTDOWN");
     }
 
@@ -117,14 +118,14 @@ public class HelpDesk {
         /*
         Wait a couple of seconds for the process to reach User Task node (Prepare Answer)
          */
-        logger.info("Waiting 2 seconds for the process to reach Prepare Answer node");
+        System.out.println("Waiting 2 seconds for the process to reach Prepare Answer node");
         Thread.sleep(2000);
 
         /*
         Are we there yet?
          */
         Assert.assertTrue(session.isRunning());
-        logger.info("Verifying Prepare Answer node");
+        System.out.println("Verifying Prepare Answer node");
         List<UserTask> userTasks = em.createQuery("SELECT task FROM UserTask task WHERE task.process.instanceId = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(userTasks.size() == 1);
         Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
@@ -136,14 +137,14 @@ public class HelpDesk {
         Assert.assertTrue(subject.equals(userTask.getSubject()));
         Assert.assertTrue(userTask.getTaskState() == TaskState.Created);
 
-        logger.info("Posting answer and completing the Prepare Answer task");
+        System.out.println("Posting answer and completing the Prepare Answer task");
         userTask.setAnswer("It's alright, Ma");
         userTask.complete();
 
-        logger.info("Waiting 2 seconds for the process to reach event based gateway node");
+        System.out.println("Waiting 2 seconds for the process to reach event based gateway node");
         Thread.sleep(2000);
 
-        logger.info("Verifying gateway triggers");
+        System.out.println("Verifying gateway triggers");
         Assert.assertTrue(session.isRunning());
         List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
@@ -152,20 +153,20 @@ public class HelpDesk {
             em.detach(trigger);
         }
 
-        logger.info("Adjusting timer alarm time to ensure it is ready to be fired");
+        System.out.println("Adjusting timer alarm time to ensure it is ready to be fired");
         TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getSingleResult();
         timer.setNextAlarm(new Date());
         em.merge(timer);
         em.flush();
         em.detach(timer);
-        logger.info("Committing application transaction.");
+        System.out.println("Committing application transaction.");
         em.getTransaction().commit();
-        logger.info("Closing Entity Manager");
+        System.out.println("Closing Entity Manager");
         em.close();
-        logger.info("Waiting 6 seconds for the timer to fire, this should end the process");
+        System.out.println("Waiting 6 seconds for the timer to fire, this should end the process");
         Thread.sleep(6000);
 
-        logger.info("Verifying process termination");
+        System.out.println("Verifying process termination");
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));
@@ -212,7 +213,7 @@ public class HelpDesk {
         em.getTransaction().commit();
         em.close();
 
-        logger.info("Waiting 2 seconds for the process to reach event based gateway node");
+        System.out.println("Waiting 2 seconds for the process to reach event based gateway node");
         Thread.sleep(2000);
 
         System.out.println("\n====================== Verifying gateway triggers =========================\n");
@@ -222,7 +223,14 @@ public class HelpDesk {
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
         em.close();
 
-// TODO: receive confirmation message
+        message = new EventToken();
+        message.getData().put("message", "Thank you");
+        message.getData().put("isAccepted", new Boolean(true));
+        message.setDefinitionId("ID_30607364_7317_2206_0052_000400200024");
+        session.sendEventToken(message, processId);
+
+        System.out.println("\n===================== Waiting 2 seconds for the process to complete =====================\n");
+        Thread.sleep(2000);
 
         System.out.println("\n====================== Verifying process termination =========================\n");
         Assert.assertTrue(session.isRunning());
@@ -230,5 +238,4 @@ public class HelpDesk {
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));
         em.close();
     }
-
 }
