@@ -57,6 +57,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     private long lastTriggerPollTime = 0L;
 
     // BPMN stuff
+    private ThreadLocal<Boolean> tokenOut;
     private AnnotationDictionary dictionary;
     private HashMap<String, TDefinitions> definitionsMap;
     private HashMap<String, ProcessDefinition> processDefinitions;
@@ -92,6 +93,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         executor = Executors.newFixedThreadPool(10);
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
+        tokenOut = new ThreadLocal<Boolean>();
         future = executor.submit((Runnable) this);
     }
 
@@ -187,22 +189,12 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                         e.printStackTrace();
                         throw new IllegalStateException("Failed to process target node, " + e);
                     }
-                    /*
-                     The node will be persisted (if it is eligible) by createNode() and it may be already removed by
-                     any of the sendToken() methods. Yet, it may be persisted but not updated after tokenIn(). So we
-                     must check whether the node is managed and merge, if yes.
-                    */
-                    if (em.get().contains(node)) {
-                        em.get().merge(node);
-                    }
                     boolean endProcess = false;
                     if (isEndEvent(t4n.getNodeDef())) {
                         endProcess = processEndEvent(node, process);
                     }
                     if (endProcess) {
                         em.get().remove(process);
-                    } else {
-                        em.get().merge(process);
                     }
                 } else if (workItem instanceof TokenFromNode) {
                     try {
@@ -225,7 +217,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                         throw new IllegalStateException("Failed to process event id=" + ((EventIn) workItem).getEventToken().getDefinitionId() + ", " + e);
                     }
                 }
-                em.get().flush();
                 commitTransaction();
                 releaseEntityManager();
             }
@@ -359,6 +350,10 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     @Override
     public void sendToken(WorkToken token, Node fromNode, Connector connector) {
+        tokenOut.set(true);
+        if (!isRunner()) {
+            fromNode = (Node) merge(fromNode);
+        }
         TokenFromNode tokenFromNode = new TokenFromNode();
         tokenFromNode.setToken(token);
         BusinessProcess process = fromNode.getProcess();
@@ -451,7 +446,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
     }
 
-        // ============================================================================================== handleGatewayEvent
+    // ============================================================================================== handleGatewayEvent
 
     /**
      * Handles event caught by one of the target nodes of event based gateway
@@ -461,7 +456,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     private void handleGatewayEvent(EventBasedGateway gateway, Node eventNode) {
         assert isRunner();
-//        acquireEntityManager();
         // delete event node (token is already out)
         if (em.get().contains(eventNode)) {
             em.get().remove(eventNode);
@@ -495,13 +489,16 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 }
             }
         }
-//        releaseEntityManager();
     }
 
     // ====================================================================================== sendToken(token, fromNode)
 
     @Override
     public void sendToken(WorkToken token, Node fromNode) {
+        tokenOut.set(true);
+        if (!isRunner()) {
+            fromNode = (Node) merge(fromNode);
+        }
         TokenFromNode tokenFromNode = new TokenFromNode();
         tokenFromNode.setToken(token);
         BusinessProcess process = fromNode.getProcess();
@@ -533,9 +530,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         acquireEntityManager();
         List<CatchEventNode> nodes = em.get().createNamedQuery("CatchEventNode.findStartNodesByProcess").setParameter("process", process).getResultList();
         for (CatchEventNode node : nodes) {
-            if (em.get().contains(node)) {
-                em.get().remove(node);
-            }
+            em.get().remove(node);
         }
         releaseEntityManager();
     }
@@ -543,7 +538,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     // ================================================================================================= createConnector
 
     private Connector createConnector(String from, String to) {
-        // TODO: implement it!
+        // TODO: implement it! If we need it, though...
         return null;
     }
 
@@ -560,6 +555,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     @Override
     public void sendTokens(Map<Connector, WorkToken> tokens) {
+        tokenOut.set(true);
        // TODO: implement
        throw new IllegalStateException("Not implemented");
     }
@@ -568,7 +564,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     private void handleEventToken(EventIn eventIn) {
         assert isRunner();  // may not be called from application thread
-//        acquireEntityManager(); // we were called from runner, thus all persistence stuff is in place already
         BusinessProcess process = em.get().find(BusinessProcess.class, eventIn.getProcessInstanceId());
         EventToken token = eventIn.getEventToken();
         /*
@@ -598,7 +593,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 trigger.setEventNode(em.get().merge(node));
             }
         }
-//        releaseEntityManager();
     }
 
     // ================================================================================================== sendEventToken
@@ -711,6 +705,9 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                         em.get().persist(o);
                     }
                     commitTransaction();
+                    for (Object o : entities) {
+                        em.get().detach(o);
+                    }
                     releaseEntityManager();
                     kicker.add("done");
                 }
@@ -745,6 +742,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                     beginTransaction();
                     Object mergedEntity = em.get().merge(o);
                     commitTransaction();
+                    em.get().detach(mergedEntity);
                     releaseEntityManager();
                     kicker.add(mergedEntity);
                 }
@@ -861,8 +859,11 @@ public class PersistentWorkSession implements WorkSession, Runnable {
          */
         for (TActivity activity : startActivities) {
             Node node = createNode(activity, process);
+            tokenOut.set(false);
             node.tokenIn(new WorkToken(), null);
-            merge(node);
+            if (!isRunner() && !tokenOut.get()) {
+                merge(node);
+            }
         }
         /*
             Only one start event will be triggered, if there is at least one None Start Event, it will be triggered,
@@ -872,13 +873,18 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             for (TCatchEvent start : startEvents) {
                 CatchEventNode node = (CatchEventNode) createNode(start, process);
                 node.setStartEvent(true);
-                merge(node);
+                if (!isRunner()) {
+                    merge(node);
+                }
             }
         } else {
             CatchEventNode node = (CatchEventNode) createNode(noneStartEvents.get(0), process);
+            tokenOut.set(false);
             node.eventIn(new EventToken());
             node.setStartEvent(true);
-            merge(node);
+            if (!isRunner() && !tokenOut.get()) {
+                merge(node);
+            }
         }
         if (isRunner()) {
             em.get().flush();   // we need to flush here to ensure the process instance id is not empty

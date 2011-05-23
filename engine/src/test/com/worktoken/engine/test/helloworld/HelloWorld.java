@@ -94,7 +94,7 @@ public class HelloWorld {
         long processId = session.createProcess("_1");
         Assert.assertTrue(processId > 0);
         EntityManager em = emf.createEntityManager();
-        BusinessProcess process = em.find(HelpDeskProcess.class, processId);
+        BusinessProcess process = em.find(BusinessProcess.class, processId);
         Assert.assertNotNull(process);
         em.detach(process);
         em.close();
