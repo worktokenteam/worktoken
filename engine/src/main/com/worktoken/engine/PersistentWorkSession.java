@@ -841,19 +841,19 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             return node;
         }
         if (tNode instanceof TUserTask) {
-            UserTask node = createUserTaskNode((TUserTask) tNode, process);
+            UserTask node = instantiateNode(tNode, UserTask.class, process);
             node.setSession(this);
             persist(node);
             return node;
         }
         if (tNode instanceof TBusinessRuleTask) {
-            BusinessRuleTask node = createBusinessRuleTaskNode((TBusinessRuleTask) tNode, process);
+            BusinessRuleTask node = instantiateNode(tNode, BusinessRuleTask.class, process);
             node.setSession(this);
             persist(node);
             return node;
         }
         if (tNode instanceof TSendTask) {
-            SendTask node = createSendTaskNode((TSendTask) tNode, process);
+            SendTask node = instantiateNode(tNode, SendTask.class, process);
             node.setSession(this);
             persist(node);
             return node;
@@ -862,8 +862,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             EventBasedGateway node = createEventBasedGateway((TEventBasedGateway) tNode, process);
             node.setSession(this);
             persist(node);
-// TODO: batch persist
-//            persistList(node.getTargets());
             for (Node target : node.getTargets()) {
                 if (target instanceof CatchEventNode) {
                     ((CatchEventNode) target).setOwnerId(node.getInstanceId());
@@ -875,7 +873,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             return node;
         }
         if (tNode instanceof TExclusiveGateway) {
-            ExclusiveGateway node = createExclusiveGateway((TExclusiveGateway) tNode, process);
+            ExclusiveGateway node = instantiateNode(tNode, ExclusiveGateway.class, process);
             node.setSession(this);
             // do not persist
             return node;
@@ -890,29 +888,17 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 "\", node(id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\")");
     }
 
-    private Class<? extends Node> instantiateNode(Class<? extends TFlowNode> tNode, Class<? extends Node> nClass, BusinessProcess process) {
-
-    }
-
-
-    // ========================================================================================== createExclusiveGateway
-
-    /**
-     * Creates an instance of Send Task Node
-     * <p/>
-     * Instantiates annotated class. If no annotated class found, instantiates SendTask object. Does not persist
-     * the node.
-     *
-     * @param tNode
-     * @param process
-     * @return SendTask
-     */
-    private ExclusiveGateway createExclusiveGateway(TExclusiveGateway tNode, BusinessProcess process) {
-        ExclusiveGateway node;
+    private <T extends Node> T instantiateNode(TFlowNode tNode, Class<T> nClass, BusinessProcess process) {
+        Node node;
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
         if (ac == null) {
-            node = new ExclusiveGateway();
-            node.setClassName(ExclusiveGateway.class.getName());
+            try {
+                node = nClass.newInstance();
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IllegalStateException("Failed to instantiate object of type  " + nClass.getName() + ", due to " + e);
+            }
+            node.setClassName(nClass.getName());
         } else {
             Object entity;
             try {
@@ -920,123 +906,15 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
             }
-            if (!(entity instanceof ExclusiveGateway)) {
-                throw new IllegalStateException("Annotated send task class " + ac.getClazz() + " does not extend ExclusiveGateway class");
+            if (!nClass.isInstance(entity)) {
+                throw new IllegalStateException("Annotated class " + ac.getClazz() + " does not extend " + nClass.getName() + " class");
             }
-            node = (ExclusiveGateway) entity;
+            node = (Node) entity;
             node.setClassName(ac.getClazz());
         }
         node.setNodeId(tNode.getId());
         node.setProcess(process);
-        return node;
-    }
-
-    // ============================================================================================== createSendTaskNode
-
-    /**
-     * Creates an instance of Send Task Node
-     * <p/>
-     * Instantiates annotated class. If no annotated class found, instantiates SendTask object. Does not persist
-     * the node.
-     *
-     * @param tNode
-     * @param process
-     * @return SendTask
-     */
-    private SendTask createSendTaskNode(TSendTask tNode, BusinessProcess process) {
-        SendTask node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new SendTask();
-            node.setClassName(SendTask.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof SendTask)) {
-                throw new IllegalStateException("Annotated send task class " + ac.getClazz() + " does not extend SendTask class");
-            }
-            node = (SendTask) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
-        return node;
-    }
-
-    // ====================================================================================== createBusinessRuleTaskNode
-
-    /**
-     * Creates an instance of Business Rule Task Node
-     * <p/>
-     * Instantiates annotated class. If no annotated class found, instantiates BusinessRuleTask object. Does not persist
-     * the node.
-     *
-     * @param tNode
-     * @param process
-     * @return BusinessRuleTask
-     */
-    private BusinessRuleTask createBusinessRuleTaskNode(TBusinessRuleTask tNode, BusinessProcess process) {
-        BusinessRuleTask node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new BusinessRuleTask();
-            node.setClassName(BusinessRuleTask.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof BusinessRuleTask)) {
-                throw new IllegalStateException("Annotated business rule task class " + ac.getClazz() + " does not extend BusinessRuleTask class");
-            }
-            node = (BusinessRuleTask) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
-        return node;
-    }
-
-    // ============================================================================================== createUserTaskNode
-
-    /**
-     * Creates an instance of User Task Node
-     * <p/>
-     * Instantiates annotated class. If no annotated class found, instantiates UserTask object. Does not persist
-     * the node.
-     *
-     * @param tNode
-     * @param process
-     * @return UserTask
-     */
-    private UserTask createUserTaskNode(TUserTask tNode, BusinessProcess process) {
-        UserTask node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new UserTask();
-            node.setClassName(UserTask.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof UserTask)) {
-                throw new IllegalStateException("Annotated user task class " + ac.getClazz() + " does not extend UserTask class");
-            }
-            node = (UserTask) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
-        return node;
+        return (T) node;
     }
 
     // ================================================================================================== EventValidator
@@ -1055,29 +933,11 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      *
      * @param tNode
      * @param process
+     * @param validator
      * @return CatchEventNode
      */
     private CatchEventNode createCatchEventNode(TCatchEvent tNode, BusinessProcess process, EventValidator validator) {
-        CatchEventNode node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new CatchEventNode();
-            node.setClassName(CatchEventNode.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof CatchEventNode)) {
-                throw new IllegalStateException("Annotated catch event class " + ac.getClazz() + " does not extend CatchEventNode class");
-            }
-            node = (CatchEventNode) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
+        CatchEventNode node = instantiateNode(tNode, CatchEventNode.class, process);
         /*
          * Setup triggers
          */
@@ -1145,26 +1005,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      * @return EventBasedGateway
      */
     private EventBasedGateway createEventBasedGateway(TEventBasedGateway tNode, BusinessProcess process) {
-        EventBasedGateway node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new EventBasedGateway();
-            node.setClassName(EventBasedGateway.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof EventBasedGateway)) {
-                throw new IllegalStateException("Annotated catch event class " + ac.getClazz() + " does not extend EventBasedGateway class");
-            }
-            node = (EventBasedGateway) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
+        EventBasedGateway node = instantiateNode(tNode, EventBasedGateway.class, process);
         /*
          * Setup targets
          */
@@ -1214,75 +1055,13 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      * @return ThrowEventNode
      */
     private ThrowEventNode createThrowEventNode(TThrowEvent tNode, BusinessProcess process) {
-        ThrowEventNode node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
-        if (ac == null) {
-            node = new ThrowEventNode();
-            node.setClassName(ThrowEventNode.class.getName());
-        } else {
-            Object entity;
-            try {
-                entity = Class.forName(ac.getClazz()).newInstance();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to instantiate object of class " + ac.getClazz() + " due to " + e);
-            }
-            if (!(entity instanceof ThrowEventNode)) {
-                throw new IllegalStateException("Annotated throw event class " + ac.getClazz() + " does not extend ThrowEventNode class");
-            }
-            node = (ThrowEventNode) entity;
-            node.setClassName(ac.getClazz());
-        }
-        node.setNodeId(tNode.getId());
-        node.setProcess(process);
+        ThrowEventNode node = instantiateNode(tNode, ThrowEventNode.class, process);
         /*
          * Process event definitions
          */
         for (JAXBElement<? extends TEventDefinition> element : tNode.getEventDefinition()) {
             TEventDefinition eventDefinition = element.getValue();
             node.getEvents().add(eventDefinition);
-
-//            try {
-//                EventTrigger trigger = createEventTrigger(eventDefinition);
-//                node.getTriggers().add(trigger);
-//                trigger.setEventNode(node);
-//            } catch (Exception e) {
-//                throw new IllegalStateException("Failed to create event trigger for catch event node: id=\"" +
-//                        tNode.getId() + "\", name=\"" + tNode.getName() + "\", " + e);
-//            }
-//            if (eventDefinition instanceof TMessageEventDefinition) {
-//                MessageTrigger trigger = createMessageEventTrigger((TMessageEventDefinition) eventDefinition);
-//                node.getTriggers().add(trigger);
-//                trigger.setEventNode(node);
-//            } else {
-//            if (eventDefinition instanceof TTimerEventDefinition) {
-//                return EventType.Timer;
-//            }
-//            if (eventDefinition instanceof TCancelEventDefinition) {
-//                return EventType.Cancel;
-//            }
-//            if (eventDefinition instanceof TCompensateEventDefinition) {
-//                return EventType.Compensate;
-//            }
-//            if (eventDefinition instanceof TConditionalEventDefinition) {
-//                return EventType.Conditional;
-//            }
-//            if (eventDefinition instanceof TErrorEventDefinition) {
-//                return EventType.Error;
-//            }
-//            if (eventDefinition instanceof TEscalationEventDefinition) {
-//                return EventType.Escalation;
-//            }
-//            if (eventDefinition instanceof TLinkEventDefinition) {
-//                return EventType.Link;
-//            }
-//            if (eventDefinition instanceof TSignalEventDefinition) {
-//                return EventType.Signal;
-//            }
-//            if (eventDefinition instanceof TTerminateEventDefinition) {
-//                return EventType.Terminate;
-//            }
-//                throw new IllegalStateException("Unknown event definition type for event node: id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\"");
-//            }
         }
         return node;
     }
@@ -1290,8 +1069,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     private EventTrigger createEventTrigger(TEventDefinition eventDefinition) {
         if (eventDefinition instanceof TMessageEventDefinition) {
-            MessageTrigger trigger = createMessageEventTrigger((TMessageEventDefinition) eventDefinition);
-            return trigger;
+            return createMessageEventTrigger((TMessageEventDefinition) eventDefinition);
         } else if (eventDefinition instanceof TTimerEventDefinition) {
             TimerTrigger trigger = createTimerTrigger((TTimerEventDefinition) eventDefinition);
             trigger.arm();
@@ -1356,7 +1134,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
         return messageDefinitions;
     }
-
 
     // ================================================================================================= EachNodeHandler
 
