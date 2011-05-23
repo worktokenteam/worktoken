@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions exporter="BP-VA" exporterVersion="1" id="HelloWorld" targetNamespace="http://www.omg.org/bpmn20" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:bpva="http://www.visual-paradigm.com/product/bpva/" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd">
+	<process id="_1" name="Hello World">
+        <startEvent id="_2_1" name="Start">
+            <outgoing>_2_5</outgoing>
+		</startEvent>
+		<userTask completionQuantity="1" id="_2_4" implementation="##unspecified" isForCompensation="false" name="Say Hello" startQuantity="1">
+            <incoming>_2_5</incoming>
+			<outgoing>_2_7</outgoing>
+		</userTask>
+		<sequenceFlow id="_2_5" name="" sourceRef="_2_1" targetRef="_2_4">
+        </sequenceFlow>
+		<endEvent id="_2_6" name="End">
+            <incoming>_2_7</incoming>
+		</endEvent>
+		<sequenceFlow id="_2_7" name="" sourceRef="_2_4" targetRef="_2_6">
+        </sequenceFlow>
+	</process>
+	<bpmndi:BPMNDiagram id="diagram-_1" name="Hello World">
+		<bpmndi:BPMNPlane bpmnElement="_1" id="plane-_1">
+			<bpmndi:BPMNShape bpmnElement="_2_1" id="ID_64415101_3600_6200_2400_000021400001">
+				<omgdc:Bounds height="20" width="20" x="130" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="_2_4" id="ID_64415101_3600_6200_2400_000021400002">
+				<omgdc:Bounds height="40" width="80" x="250" y="230"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_5" id="ID_64415101_3600_6200_2400_000021400003" sourceElement="ID_64415101_3600_6200_2400_000021400001" targetElement="ID_64415101_3600_6200_2400_000021400002">
+				<omgdi:waypoint x="150" y="250"/>
+				<omgdi:waypoint x="249" y="250"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_6" id="ID_64415101_3600_6200_2400_000021400004">
+				<omgdc:Bounds height="20" width="20" x="410" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_7" id="ID_64415101_3600_6200_2400_000021400005" sourceElement="ID_64415101_3600_6200_2400_000021400002" targetElement="ID_64415101_3600_6200_2400_000021400004">
+				<omgdi:waypoint x="330" y="250"/>
+				<omgdi:waypoint x="410" y="250"/>
+			</bpmndi:BPMNEdge>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</definitions>

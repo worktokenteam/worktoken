@@ -767,6 +767,46 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         return null;
     }
 
+    // ==================================================================================================== getUserTasks
+
+    private List<UserTask> getUserTasks(EntityManager em) {
+        return em.createNamedQuery("UserTask.findAll").getResultList();
+    }
+
+    // ==================================================================================================== getUserTasks
+
+    public List<UserTask> getUserTasks() {
+        if (isRunner()) {
+            return getUserTasks(em.get());
+        } else {
+            final LinkedBlockingQueue<List<UserTask>> kicker = new LinkedBlockingQueue<List<UserTask>>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    List<UserTask> tasks = getUserTasks(em.get());
+                    releaseEntityManager();
+                    kicker.add(tasks);
+                }
+            });
+            try {
+                List<UserTask> tasks = null;
+                int retries = 40;
+                while (tasks == null && retries > 0) {
+                    --retries;
+                    tasks = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: and what now? no way to stop the Runnable. Rising exception here?
+                 */
+                return tasks;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return Collections.emptyList();
+    }
+
     // =================================================================================================== createProcess
 
     @Override

@@ -25,6 +25,8 @@ import javax.persistence.NamedQuery;
  */
 @Entity
 @NamedQueries({
+        @NamedQuery(name = "UserTask.findAll",
+                    query = "SELECT n FROM UserTask n"),
         @NamedQuery(name = "UserTask.findByProcess",
                     query = "SELECT n FROM UserTask n WHERE n.process = :process"),
         @NamedQuery(name = "UserTask.findByDefIdAndProcess",
