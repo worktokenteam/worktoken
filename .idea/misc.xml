@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DependencyValidationManager">
+    <scope name="WorkToken" pattern="!src:org.omg.spec..*&amp;&amp;!lib:*..*&amp;&amp;!file:engine.iml&amp;&amp;!file:lib//*" />
     <option name="SKIP_IMPORT_STATEMENTS" value="false" />
   </component>
   <component name="EntryPointsManager">
