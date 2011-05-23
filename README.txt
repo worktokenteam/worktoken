@@ -1,0 +1,5 @@
+WorkToken is an open source BPMN 2 engine written in Java. The framework is intended for Java developers implementing business processes from BPMN 2 specifications. The WorkToken process engine does not require cumbersome property editors, connectors, data mappers. It does not use any BPMN extensions. The framework was designed to allow Java programmers to capitalize on their core skills, rather than engaging into composing a puzzle made of plugins, property dialog boxes and code snippets written in scripting languages.
+
+WorkToken serves as a lightweight container for annotated POJOs that represent BPMN elements, such as user tasks or receive message events. The engine is responsible for instantiation of these objects, persistence and token routing.
+
+It is a re-factored version of a custom BPMN-2 engine developed by Rush Project Inc in 2010-2011.
