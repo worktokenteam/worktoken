@@ -42,7 +42,11 @@ public class UserTask  extends Node {
 
     public void sendResult(WorkToken token) {
         taskState = TaskState.Completed;
-        tokenOut(token == null ? new WorkToken() : token);
+        tokenOut(token);
+    }
+
+    public void sendResult() {
+        sendResult(new WorkToken());
     }
 
     @Override

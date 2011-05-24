@@ -104,53 +104,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         return sessionId;
     }
 
-    // ============================================================================================ acquireEntityManager
-
-    protected EntityManager acquireEntityManager() {
-        if (em.get() == null) {
-            em.set(emf.createEntityManager());
-            acquireCounter.set(1);
-        } else {
-            acquireCounter.set(acquireCounter.get() + 1);
-        }
-        return em.get();
-    }
-
-    // ============================================================================================ releaseEntityManager
-
-    protected void releaseEntityManager() {
-        if (acquireCounter.get() <= 0) {
-            throw new IllegalStateException("Mismatched call to releaseEntityManager()");
-        }
-        acquireCounter.set(acquireCounter.get() - 1);
-        if (acquireCounter.get() == 0) {
-            em.remove();
-        }
-    }
-
-    // ================================================================================================ beginTransaction
-
-    protected void beginTransaction() {
-        em.get().getTransaction().begin();
-    }
-
-    // =============================================================================================== commitTransaction
-
-    protected void commitTransaction() {
-        EntityTransaction transaction = em.get().getTransaction();
-        if (transaction.getRollbackOnly()) {
-            transaction.rollback();
-        } else {
-            transaction.commit();
-        }
-    }
-
-    // =============================================================================================== commitTransaction
-
-    protected void markRollbackTransaction() {
-        em.get().getTransaction().setRollbackOnly();
-    }
-
     // ============================================================================================================= run
 
     @Override
@@ -310,6 +263,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     // ================================================================================================= processEndEvent
 
     private boolean processEndEvent(Node node, BusinessProcess process) {
+        assert isRunner();
         if (isTerminateEvent(node)) {
             acquireEntityManager();
             // TODO: FIX! absolutely wrong, just run delete query
@@ -510,9 +464,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     // =========================================================================================================== close
 
-    //TODO: throwing exception is not a good idea
     @Override
-    public void close() throws InterruptedException {
+    public void close() {
         cancelled = true;
         try {
             Thread.sleep(1000);
@@ -556,8 +509,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     @Override
     public void sendTokens(Map<Connector, WorkToken> tokens) {
         tokenOut.set(true);
-       // TODO: implement
-       throw new IllegalStateException("Not implemented");
+        // TODO: implement
+        throw new IllegalStateException("Not implemented");
     }
 
     // ================================================================================================ handleEventToken
@@ -611,7 +564,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      * Reads BPMN definitions from InputStream
      *
      * @param stream - BPMN definition input stream
-     * @return  initialized TDefinitions data structure
+     * @return initialized TDefinitions data structure
      */
     @Override
     public TDefinitions readDefinitions(InputStream stream) throws JAXBException {
@@ -677,132 +630,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     private boolean isRunner() {
         return Thread.currentThread().getId() == threadId;
-    }
-
-    // ========================================================================================================= persist
-
-    private void persist(final Object o) {
-        List<Object> list = new ArrayList<Object>();
-        list.add(o);
-        persistList(list);
-    }
-
-    // ===================================================================================================== persistList
-
-    private void persistList(final List<Object> entities) {
-        if (isRunner()) {
-            for (Object o : entities) {
-                em.get().persist(o);
-            }
-        } else {
-            final LinkedBlockingQueue<String> kicker = new LinkedBlockingQueue<String>();
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    acquireEntityManager();
-                    beginTransaction();
-                    for (Object o : entities) {
-                        em.get().persist(o);
-                    }
-                    commitTransaction();
-                    for (Object o : entities) {
-                        em.get().detach(o);
-                    }
-                    releaseEntityManager();
-                    kicker.add("done");
-                }
-            });
-            try {
-                String result = null;
-                int retries = 40;
-                while (result == null && retries > 0) {
-                    --retries;
-                    result = kicker.poll(500, TimeUnit.MILLISECONDS);
-                }
-                /*
-                TODO: and what now? no way to stop the Runnable. Rising exception here?
-                 */
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-    }
-
-    // =========================================================================================================== merge
-
-    private Object merge(final Object o) {
-        if (isRunner()) {
-            return em.get().merge(o);
-        } else {
-            final LinkedBlockingQueue<Object> kicker = new LinkedBlockingQueue<Object>();
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    acquireEntityManager();
-                    beginTransaction();
-                    Object mergedEntity = em.get().merge(o);
-                    commitTransaction();
-                    em.get().detach(mergedEntity);
-                    releaseEntityManager();
-                    kicker.add(mergedEntity);
-                }
-            });
-            try {
-                Object entity = null;
-                int retries = 40;
-                while (entity == null && retries > 0) {
-                    --retries;
-                    entity = kicker.poll(500, TimeUnit.MILLISECONDS);
-                }
-                /*
-                TODO: and what now? no way to stop the Runnable. Rising exception here?
-                 */
-                return entity;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        return null;
-    }
-
-    // ==================================================================================================== getUserTasks
-
-    private List<UserTask> getUserTasks(EntityManager em) {
-        return em.createNamedQuery("UserTask.findAll").getResultList();
-    }
-
-    // ==================================================================================================== getUserTasks
-
-    public List<UserTask> getUserTasks() {
-        if (isRunner()) {
-            return getUserTasks(em.get());
-        } else {
-            final LinkedBlockingQueue<List<UserTask>> kicker = new LinkedBlockingQueue<List<UserTask>>();
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    acquireEntityManager();
-                    List<UserTask> tasks = getUserTasks(em.get());
-                    releaseEntityManager();
-                    kicker.add(tasks);
-                }
-            });
-            try {
-                List<UserTask> tasks = null;
-                int retries = 40;
-                while (tasks == null && retries > 0) {
-                    --retries;
-                    tasks = kicker.poll(500, TimeUnit.MILLISECONDS);
-                }
-                /*
-                TODO: and what now? no way to stop the Runnable. Rising exception here?
-                 */
-                return tasks;
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        return Collections.emptyList();
     }
 
     // =================================================================================================== createProcess
@@ -950,6 +777,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 "\", node(id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\")");
     }
 
+    // ================================================================================================= instantiateNode
+
     private <T extends Node> T instantiateNode(TFlowNode tNode, Class<T> nClass, BusinessProcess process) {
         Node node;
         AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
@@ -1016,40 +845,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                 throw new IllegalStateException("Failed to create event trigger for catch event node: id=\"" +
                         tNode.getId() + "\", name=\"" + tNode.getName() + "\", " + e);
             }
-//            if (eventDefinition instanceof TMessageEventDefinition) {
-//                MessageTrigger trigger = createMessageEventTrigger((TMessageEventDefinition) eventDefinition);
-//                node.getTriggers().add(trigger);
-//                trigger.setEventNode(node);
-//            } else {
-//            if (eventDefinition instanceof TTimerEventDefinition) {
-//                return EventType.Timer;
-//            }
-//            if (eventDefinition instanceof TCancelEventDefinition) {
-//                return EventType.Cancel;
-//            }
-//            if (eventDefinition instanceof TCompensateEventDefinition) {
-//                return EventType.Compensate;
-//            }
-//            if (eventDefinition instanceof TConditionalEventDefinition) {
-//                return EventType.Conditional;
-//            }
-//            if (eventDefinition instanceof TErrorEventDefinition) {
-//                return EventType.Error;
-//            }
-//            if (eventDefinition instanceof TEscalationEventDefinition) {
-//                return EventType.Escalation;
-//            }
-//            if (eventDefinition instanceof TLinkEventDefinition) {
-//                return EventType.Link;
-//            }
-//            if (eventDefinition instanceof TSignalEventDefinition) {
-//                return EventType.Signal;
-//            }
-//            if (eventDefinition instanceof TTerminateEventDefinition) {
-//                return EventType.Terminate;
-//            }
-//                throw new IllegalStateException("Unknown event definition type for event node: id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\"");
-//            }
         }
         return node;
     }
@@ -1334,5 +1129,171 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     public static void setTriggerPollCycle(long triggerPollCycle) {
         TriggerPollCycle = triggerPollCycle;
+    }
+
+    /*
+    ===================================== Persistence related methods ==================================================
+
+    To avoid interference with application transactions, all persistence operations are executed outside of application
+    Thread - either in queue runner or in a dedicated thread.
+
+     */
+    // ========================================================================================================= persist
+
+    private void persist(final Object o) {
+        if (isRunner()) {
+            em.get().persist(o);
+        } else {
+            final LinkedBlockingQueue<String> kicker = new LinkedBlockingQueue<String>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    beginTransaction();
+                    em.get().persist(o);
+                    commitTransaction();
+                    em.get().detach(o);
+                    releaseEntityManager();
+                    kicker.add("done");
+                }
+            });
+            try {
+                String result = null;
+                int retries = 40;
+                while (result == null && retries > 0) {
+                    --retries;
+                    result = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: and what now? no way to stop the Runnable. Rising exception here?
+                 */
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
+
+    // =========================================================================================================== merge
+
+    private Object merge(final Object o) {
+        if (isRunner()) {
+            return em.get().merge(o);
+        } else {
+            final LinkedBlockingQueue<Object> kicker = new LinkedBlockingQueue<Object>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    beginTransaction();
+                    Object mergedEntity = em.get().merge(o);
+                    commitTransaction();
+                    em.get().detach(mergedEntity);
+                    releaseEntityManager();
+                    kicker.add(mergedEntity);
+                }
+            });
+            try {
+                Object entity = null;
+                int retries = 40;
+                while (entity == null && retries > 0) {
+                    --retries;
+                    entity = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: and what now? no way to stop the Runnable. Rising exception here?
+                 */
+                return entity;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return null;
+    }
+
+    // ==================================================================================================== getUserTasks
+
+    private List<UserTask> getUserTasks(EntityManager em) {
+        return em.createNamedQuery("UserTask.findAll").getResultList();
+    }
+
+    // ==================================================================================================== getUserTasks
+
+    public List<UserTask> getUserTasks() {
+        if (isRunner()) {
+            return getUserTasks(em.get());
+        } else {
+            final LinkedBlockingQueue<List<UserTask>> kicker = new LinkedBlockingQueue<List<UserTask>>();
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    acquireEntityManager();
+                    List<UserTask> tasks = getUserTasks(em.get());
+                    releaseEntityManager();
+                    kicker.add(tasks);
+                }
+            });
+            try {
+                List<UserTask> tasks = null;
+                int retries = 40;
+                while (tasks == null && retries > 0) {
+                    --retries;
+                    tasks = kicker.poll(500, TimeUnit.MILLISECONDS);
+                }
+                /*
+                TODO: log error
+                 */
+                return tasks;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    // ============================================================================================ acquireEntityManager
+
+    protected EntityManager acquireEntityManager() {
+        if (em.get() == null) {
+            em.set(emf.createEntityManager());
+            acquireCounter.set(1);
+        } else {
+            acquireCounter.set(acquireCounter.get() + 1);
+        }
+        return em.get();
+    }
+
+    // ============================================================================================ releaseEntityManager
+
+    protected void releaseEntityManager() {
+        if (acquireCounter.get() <= 0) {
+            throw new IllegalStateException("Mismatched call to releaseEntityManager()");
+        }
+        acquireCounter.set(acquireCounter.get() - 1);
+        if (acquireCounter.get() == 0) {
+            em.remove();
+        }
+    }
+
+    // ================================================================================================ beginTransaction
+
+    protected void beginTransaction() {
+        em.get().getTransaction().begin();
+    }
+
+    // =============================================================================================== commitTransaction
+
+    protected void commitTransaction() {
+        EntityTransaction transaction = em.get().getTransaction();
+        if (transaction.getRollbackOnly()) {
+            transaction.rollback();
+        } else {
+            transaction.commit();
+        }
+    }
+
+    // ========================================================================================= markRollbackTransaction
+
+    protected void markRollbackTransaction() {
+        em.get().getTransaction().setRollbackOnly();
     }
 }

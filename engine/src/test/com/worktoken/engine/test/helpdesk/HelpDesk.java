@@ -19,7 +19,10 @@ package com.worktoken.engine.test.helpdesk;
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.model.*;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.omg.spec.bpmn._20100524.model.TDefinitions;
 
 import javax.persistence.EntityManager;
@@ -30,7 +33,6 @@ import java.sql.DriverManager;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
@@ -48,7 +50,6 @@ public class HelpDesk {
         Start database and create entity manager factory
          */
         System.out.println("Starting in-memory HSQL database for unit tests");
-        Class.forName("org.hsqldb.jdbcDriver");
         connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
         emf = Persistence.createEntityManagerFactory("testPU");
 

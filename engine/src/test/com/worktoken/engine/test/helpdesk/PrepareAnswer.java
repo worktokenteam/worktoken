@@ -29,7 +29,7 @@ import javax.persistence.Entity;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @FlowElement(nodeRef = "Prepare answer", refType = RefType.Name, processId = "process-com_worktoken_helpdesk")
-@Entity(name = "HD_PrepareAnswer")
+@Entity
 public class PrepareAnswer extends UserTask {
 
     private String answer;

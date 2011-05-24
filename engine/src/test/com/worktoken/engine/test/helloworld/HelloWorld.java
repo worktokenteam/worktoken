@@ -18,7 +18,6 @@ package com.worktoken.engine.test.helloworld;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
-import com.worktoken.engine.test.helpdesk.HelpDeskProcess;
 import com.worktoken.model.BusinessProcess;
 import com.worktoken.model.TaskState;
 import com.worktoken.model.UserTask;
@@ -52,7 +51,6 @@ public class HelloWorld {
         Start database and create entity manager factory
          */
         System.out.println("Starting in-memory HSQL database");
-        Class.forName("org.hsqldb.jdbcDriver");
         connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
         emf = Persistence.createEntityManagerFactory("testPU");
 
@@ -60,10 +58,10 @@ public class HelloWorld {
         Prepare and verify annotation library
          */
         List<Class> annotatedClasses = new ArrayList<Class>();
-//        annotatedClasses.add(HelpDeskProcess.class);
+        annotatedClasses.add(SayHello.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
-//        Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
+        Assert.assertNotNull(dictionary.findNode(null, "Say Hello", "helloWorld"));
 
         /*
         Create work session and load process definition
@@ -91,7 +89,7 @@ public class HelloWorld {
         Create process instance. We retrieve the process entity from database for verification purposes. After
         verification the entity must be detached, otherwise we will have stale version of the object pretty soon.
          */
-        long processId = session.createProcess("_1");
+        long processId = session.createProcess("helloWorld");
         Assert.assertTrue(processId > 0);
         EntityManager em = emf.createEntityManager();
         BusinessProcess process = em.find(BusinessProcess.class, processId);
@@ -103,7 +101,7 @@ public class HelloWorld {
         /*
         Wait a couple of seconds for the process to reach User Task node (Say Hello)
          */
-        System.out.println("\n========================== Waiting 2 seconds for the process to reach Prepare Answer node ================\n");
+        System.out.println("\n========================== Waiting 2 seconds for the process to reach Say Hello node ================\n");
         Thread.sleep(2000);
 
         /*
@@ -112,20 +110,25 @@ public class HelloWorld {
         Assert.assertTrue(session.isRunning());
         List<UserTask> userTasks = session.getUserTasks();
         Assert.assertTrue(userTasks.size() == 1);
-//        Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
-        UserTask userTask = userTasks.get(0);
+        Assert.assertTrue(userTasks.get(0) instanceof SayHello);
+        SayHello sayHello = (SayHello) userTasks.get(0);
+        Assert.assertTrue(sayHello.getTaskState() == TaskState.Created);
         /*
-        IMPORTANT: do not forget to detach the user task, otherwise we will have stale entity soon.
+        Complete user task
          */
-        Assert.assertTrue(userTask.getTaskState() == TaskState.Created);
+        sayHello.complete();
 
-//        userTask.complete();
+        /*
+        Wait a couple of seconds for the process to end
+         */
+        System.out.println("\n========================== Waiting 2 seconds for the process to end ================\n");
+        Thread.sleep(2000);
 
 
-//        System.out.println("\n==================== Verifying process termination =================================\n");
-//        Assert.assertTrue(session.isRunning());
-//        em = emf.createEntityManager();
-//        Assert.assertNull(em.find(HelpDeskProcess.class, processId));
-//        em.close();
+        System.out.println("\n==================== Verifying process termination =================================\n");
+        Assert.assertTrue(session.isRunning());
+        em = emf.createEntityManager();
+        Assert.assertNull(em.find(BusinessProcess.class, processId));
+        em.close();
     }
 }
