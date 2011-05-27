@@ -9,6 +9,7 @@
             xmlns:web="http://jboss.com/products/seam/web"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:transaction="http://jboss.com/products/seam/transaction"
+            xmlns:framework="http://jboss.com/products/seam/framework"
             xsi:schemaLocation=
                     "http://jboss.com/products/seam/core http://jboss.com/products/seam/core-2.2.xsd
                  http://jboss.com/products/seam/persistence http://jboss.com/products/seam/persistence-2.2.xsd
@@ -17,6 +18,7 @@
                  http://jboss.com/products/seam/security http://jboss.com/products/seam/security-2.2.xsd
                  http://jboss.com/products/seam/mail http://jboss.com/products/seam/mail-2.2.xsd
                  http://jboss.com/products/seam/web http://jboss.com/products/seam/web-2.2.xsd
+                 http://jboss.com/products/seam/framework http://jboss.com/products/seam/framework-2.2.xsd
                  http://jboss.com/products/seam/components http://jboss.com/products/seam/components-2.2.xsd">
 
    <core:init debug="@debug@" jndi-pattern="@jndiPattern@"/>
@@ -57,12 +59,7 @@
 
     <transaction:entity-transaction entity-manager="#{entityManager}" />
 
-   <!-- For use with jBPM pageflow or process management -->
-   <!--
-   <bpm:jbpm>
-      <bpm:process-definitions></bpm:process-definitions>
-      <bpm:pageflow-definitions></bpm:pageflow-definitions>
-   </bpm:jbpm>
-   -->
+    <framework:entity-query name="nodeList" ejbql="select n from UserTask n" />
+
 
 </components>

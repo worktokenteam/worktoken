@@ -1,0 +1,35 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:rich="http://richfaces.org/rich"
+                template="../layout/template.xhtml">
+
+    <ui:define name="body">
+        <h:form id="task">
+            <rich:panel>
+                <f:facet name="header">Task #{prepareAnswer.instanceId}, #{prepareAnswer.subject}</f:facet>
+
+                <div>
+                    #{prepareAnswer.helpdeskProcess.comments}
+                </div>
+                <div>
+                    <h:panelGrid columns="2" rowClasses="prop" columnClasses="name,value">
+                        <h:outputLabel for="answer">Answer</h:outputLabel>
+                        <h:inputText id="answer"
+                                     value="#{prepareAnswer.answer}"/>
+                    </h:panelGrid>
+                </div>
+            </rich:panel>
+
+            <div class="actionButtons">
+                <h:commandButton id="submit" value="Complete" action="#{prepareAnswer.complete}"/>
+            </div>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>

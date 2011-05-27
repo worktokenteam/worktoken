@@ -1,0 +1,40 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:rich="http://richfaces.org/rich"
+                template="layout/template.xhtml">
+
+    <ui:define name="body">
+
+        <h:form id="taskList">
+            <h:outputText value="Nothing to do" rendered="#{empty nodeList.resultList}"/>
+
+            <rich:dataTable value="#{nodeList.resultList}" var="node" rendered="#{not empty nodeList.resultList}">
+                <f:facet name="header">
+                    <h:outputText value="User Task List"/>
+                </f:facet>
+                <rich:column>
+                    <f:facet name="header">Subject</f:facet>
+                    <s:link id="_#{node.instanceId}" view="#{node.viewId}" value="#{node.subject}">
+                        <f:param name="taskid" value="#{node.instanceId}"/>
+                    </s:link>
+                </rich:column>
+                <rich:column>
+                    <f:facet name="header">Description</f:facet>
+                    <!--<h:outputText rendered="#{node.isInstanceOf('com.worktoken.model.UserTask')}" value="user task"/>-->
+                    <h:outputText value="#{node.description}"/>
+                </rich:column>
+            </rich:dataTable>
+
+            <div class="actionButtons">
+                <h:commandButton id="submit" value="Refresh" action="#{nodeList.refresh()}"/>
+            </div>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>
