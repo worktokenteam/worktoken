@@ -1152,7 +1152,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                     beginTransaction();
                     em.get().persist(o);
                     commitTransaction();
-                    em.get().detach(o);
                     releaseEntityManager();
                     kicker.add("done");
                 }
@@ -1187,7 +1186,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                     beginTransaction();
                     Object mergedEntity = em.get().merge(o);
                     commitTransaction();
-                    em.get().detach(mergedEntity);
                     releaseEntityManager();
                     kicker.add(mergedEntity);
                 }

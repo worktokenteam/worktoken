@@ -244,6 +244,7 @@
         <copy todir="${war.dir}/WEB-INF/classes">
             <fileset dir="${src.model.dir}">
                 <include name="**/*.component.xml" />
+                <include name="**/*.bpmn" />
             </fileset>
             <fileset dir="${basedir}/resources"> 
                 <include name="messages*.properties"/>

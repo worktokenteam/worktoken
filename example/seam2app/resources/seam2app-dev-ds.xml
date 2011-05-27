@@ -13,4 +13,13 @@
       <password></password>
    </local-tx-datasource>
     
+    <!--<local-tx-datasource>-->
+       <!--<jndi-name>seam2appLocalDatasource</jndi-name>-->
+       <!--<use-java-context>false</use-java-context>-->
+       <!--<connection-url>jdbc:hsqldb:file:seam2app</connection-url>-->
+       <!--<driver-class>org.hsqldb.jdbcDriver</driver-class>-->
+       <!--<user-name>sa</user-name>-->
+       <!--<password></password>-->
+    <!--</local-tx-datasource>-->
+
 </datasources>
