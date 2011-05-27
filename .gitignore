@@ -1,3 +1,5 @@
 workspace.xml
 out
 .idea/dictionaries
+example/seam2app/classes
+example/seam2app/exploded-archives
