@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Persistence deployment descriptor for dev profile -->
+<persistence xmlns="http://java.sun.com/xml/ns/persistence" 
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_1_0.xsd" 
+             version="1.0">
+             
+   <persistence-unit name="seam2app" transaction-type="JTA">
+      <provider>org.hibernate.ejb.HibernatePersistence</provider>
+      <jta-data-source>seam2appDatasource</jta-data-source>
+       <class>com.worktoken.model.BusinessProcess</class>
+       <class>com.worktoken.model.CatchEventNode</class>
+       <class>com.worktoken.model.EventBasedGateway</class>
+       <class>com.worktoken.model.EventTrigger</class>
+       <class>com.worktoken.model.ExclusiveGateway</class>
+       <class>com.worktoken.model.MessageTrigger</class>
+       <class>com.worktoken.model.Node</class>
+       <class>com.worktoken.model.ReceiveTask</class>
+       <class>com.worktoken.model.SendTask</class>
+       <class>com.worktoken.model.ThrowEventNode</class>
+       <class>com.worktoken.model.TimerTrigger</class>
+       <class>com.worktoken.model.UserTask</class>
+      <properties>
+         <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect"/>
+         <property name="hibernate.hbm2ddl.auto" value="update"/>
+         <property name="hibernate.show_sql" value="true"/>
+         <property name="hibernate.format_sql" value="true"/>
+         <property name="jboss.entity.manager.factory.jndi.name" value="java:/seam2appEntityManagerFactory"/>
+      </properties>
+   </persistence-unit>
+    
+</persistence>

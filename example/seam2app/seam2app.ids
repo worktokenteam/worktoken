@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><component name="dataSourceStorage">
+  <data-source source="LOCAL" name="seam2appDatasource" product="" version="" jdbc-version="" driver-version="" uuid="1e721f32-c476-4a9e-a84e-02f3aa93a738">
+    <jdbc-driver>org.hsqldb.jdbcDriver</jdbc-driver>
+    <jdbc-url>jdbc:hsqldb:file:seam2app</jdbc-url>
+    <user-name>sa</user-name>
+    <libraries>
+      <library>
+        <url>jar://$PROJECT_DIR$/lib/hsqldb.jar!/</url>
+      </library>
+    </libraries>
+  </data-source>
+</component>

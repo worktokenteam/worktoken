@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="worktoken">
+    <output-path>$PROJECT_DIR$/out/artifacts/worktoken</output-path>
+    <root id="archive" name="worktoken.jar">
+      <element id="module-output" name="engine" />
+    </root>
+  </artifact>
+</component>
