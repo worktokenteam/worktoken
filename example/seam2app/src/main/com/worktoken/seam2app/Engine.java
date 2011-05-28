@@ -3,6 +3,7 @@ package com.worktoken.seam2app;
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.engine.WorkSession;
+import com.worktoken.seam2.SeamAnnotationDictionary;
 import com.worktoken.seam2app.model.*;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.*;
@@ -25,8 +26,6 @@ public class Engine {
     private static final String fileName = "helpdesk.bpmn";
 
     private WorkSession session;
-    private EntityManagerFactory emf;
-    ClassListAnnotationDictionary dictionary;
 
     @Create
     public void initEngine() {
@@ -38,26 +37,14 @@ public class Engine {
     }
 
     private void initSession() {
-        EntityManagerFactory emf = null;
+        EntityManagerFactory emf;
         try {
             emf = (EntityManagerFactory) new InitialContext().lookup("java:/seam2appEntityManagerFactory");
         } catch (NamingException e) {
             e.printStackTrace();
             throw new IllegalStateException("Failed to acquire EntityManagerFactory, " + e);
         }
-        /*
-        Prepare and verify annotation library
-         */
-        List<Class> annotatedClasses = new ArrayList<Class>();
-        annotatedClasses.add(HelpDeskProcess.class);
-        annotatedClasses.add(LookupAnswer.class);
-        annotatedClasses.add(ReceiveRequest.class);
-        annotatedClasses.add(PrepareAnswer.class);
-        annotatedClasses.add(SendAnswer.class);
-        annotatedClasses.add(ReceiveConfirmation.class);
-        ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
-        dictionary.build();
-        session = new PersistentWorkSession("seam2app", emf, dictionary);
+        session = new PersistentWorkSession("seam2app", emf, SeamAnnotationDictionary.getInstance());
         // TODO: move loader into separate class (requires Seam annotation dictionary)
         try {
             session.readDefinitions(getClass().getResourceAsStream(fileName));

@@ -256,6 +256,7 @@
                 <include name="*hibernate.cfg.xml" />
                 <include name="jbpm.cfg.xml" />
                 <include name="META-INF/orm.xml" />
+                <include name="META-INF/seam-deployment.properties" />
                 <include name="*.skin.properties" if="richfaces.present"/>
                 <include name="**/*.xcss" if="richfaces.present"/>
             </fileset>
