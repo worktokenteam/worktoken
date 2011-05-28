@@ -29,12 +29,11 @@ import java.util.Set;
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
-@Name("com.worktoken.seam.SeamAnnotationDictionary")
+@Name("com.worktoken.seam2.seamAnnotationDictionary")
 @Scope(ScopeType.APPLICATION)
 @Startup
 public class SeamAnnotationDictionary extends AnnotationDictionary {
 
-    private static SeamAnnotationDictionary instance;
     @Logger
     Log log;
 
@@ -79,17 +78,13 @@ public class SeamAnnotationDictionary extends AnnotationDictionary {
             }
         }
         setScanned(true);
-        instance = this;
         if (noAnnotations) {
             log.warn("no annotated classes found, make sure /META-INF/seam-deployment.properties is included in war archive");
         }
     }
 
-    public static SeamAnnotationDictionary getInstance() {
-        return instance;
-    }
-
     private void handleFlowClass(Class clazz) {
+        @SuppressWarnings({"unchecked"})
         FlowElement annotation = (FlowElement) clazz.getAnnotation(FlowElement.class);
         AnnotatedClass entry = new AnnotatedClass();
         entry.setClazz(clazz.getName());
@@ -112,6 +107,7 @@ public class SeamAnnotationDictionary extends AnnotationDictionary {
     }
 
     private void handleProcessClass(Class clazz) {
+        @SuppressWarnings({"unchecked"})
         Process annotation = (Process) clazz.getAnnotation(Process.class);
         AnnotatedClass entry = new AnnotatedClass();
         entry.setClazz(clazz.getName());

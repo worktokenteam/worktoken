@@ -1,10 +1,24 @@
+/*
+ * Copyright (c) 2011. Rush Project Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.worktoken.seam2app;
 
-import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.engine.WorkSession;
 import com.worktoken.seam2.SeamAnnotationDictionary;
-import com.worktoken.seam2app.model.*;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.*;
 
@@ -12,20 +26,21 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.persistence.EntityManagerFactory;
 import javax.xml.bind.JAXBException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Scope(ScopeType.APPLICATION)
-@Startup
+@Startup(depends = {"com.worktoken.seam2.seamAnnotationDictionary"})
 @Name("com.worktoken.seam2app.Engine")
 public class Engine {
 
     private static final String fileName = "helpdesk.bpmn";
 
     private WorkSession session;
+
+    @In(value = "com.worktoken.seam2.seamAnnotationDictionary", required = true)
+    SeamAnnotationDictionary seamAnnotationDictionary;
 
     @Create
     public void initEngine() {
@@ -44,8 +59,7 @@ public class Engine {
             e.printStackTrace();
             throw new IllegalStateException("Failed to acquire EntityManagerFactory, " + e);
         }
-        session = new PersistentWorkSession("seam2app", emf, SeamAnnotationDictionary.getInstance());
-        // TODO: move loader into separate class (requires Seam annotation dictionary)
+        session = new PersistentWorkSession("seam2app", emf, seamAnnotationDictionary);
         try {
             session.readDefinitions(getClass().getResourceAsStream(fileName));
         } catch (JAXBException e) {
