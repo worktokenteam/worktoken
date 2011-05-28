@@ -3,6 +3,7 @@
     <output-path>$PROJECT_DIR$/out/artifacts/worktoken</output-path>
     <root id="archive" name="worktoken.jar">
       <element id="module-output" name="engine" />
+      <element id="file-copy" path="$PROJECT_DIR$/engine/src/seam.properties" />
     </root>
   </artifact>
 </component>

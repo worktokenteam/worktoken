@@ -34,6 +34,8 @@ import java.util.Set;
 @Startup
 public class SeamAnnotationDictionary extends AnnotationDictionary {
 
+    private static SeamAnnotationDictionary instance;
+
     @Logger
     Log log;
 
@@ -78,6 +80,7 @@ public class SeamAnnotationDictionary extends AnnotationDictionary {
             }
         }
         setScanned(true);
+        instance = this;
         if (noAnnotations) {
             log.warn("no annotated classes found, make sure /META-INF/seam-deployment.properties is included in war archive");
         }
@@ -123,5 +126,9 @@ public class SeamAnnotationDictionary extends AnnotationDictionary {
         }
         log.info("Registering Process Class " + clazz.getName() + " for \"" + annotation.processRef() + "\" process");
         getProcessDictionary().add(entry);
+    }
+
+    public static SeamAnnotationDictionary getInstance() {
+        return instance;
     }
 }

@@ -31,16 +31,13 @@ import javax.xml.bind.JAXBException;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Scope(ScopeType.APPLICATION)
-@Startup(depends = {"com.worktoken.seam2.seamAnnotationDictionary"})
+@Startup(depends = "com.worktoken.seam2.seamAnnotationDictionary")
 @Name("com.worktoken.seam2app.Engine")
 public class Engine {
 
     private static final String fileName = "helpdesk.bpmn";
 
     private WorkSession session;
-
-    @In(value = "com.worktoken.seam2.seamAnnotationDictionary", required = true)
-    SeamAnnotationDictionary seamAnnotationDictionary;
 
     @Create
     public void initEngine() {
@@ -59,7 +56,11 @@ public class Engine {
             e.printStackTrace();
             throw new IllegalStateException("Failed to acquire EntityManagerFactory, " + e);
         }
-        session = new PersistentWorkSession("seam2app", emf, seamAnnotationDictionary);
+        SeamAnnotationDictionary dictionary = SeamAnnotationDictionary.getInstance();
+        if (dictionary == null) {
+            throw new IllegalStateException("Missing SeamAnnotationDictionary");
+        }
+        session = new PersistentWorkSession("seam2app", emf, dictionary);
         try {
             session.readDefinitions(getClass().getResourceAsStream(fileName));
         } catch (JAXBException e) {
