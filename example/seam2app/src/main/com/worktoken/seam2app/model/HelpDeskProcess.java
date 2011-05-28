@@ -55,6 +55,10 @@ public class HelpDeskProcess extends BusinessProcess {
         return comments;
     }
 
+    public String getHtmlComments() {
+        return comments.replaceAll("\n", "<br/>");
+    }
+
     public void setComments(String comments) {
         this.comments = comments;
     }

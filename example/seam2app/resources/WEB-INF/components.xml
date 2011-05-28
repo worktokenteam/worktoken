@@ -60,6 +60,7 @@
     <transaction:entity-transaction entity-manager="#{entityManager}" />
 
     <framework:entity-query name="nodeList" ejbql="select n from UserTask n" />
+    <framework:entity-query name="confirmations" ejbql="select n from ReceiveConfirmation n" />
 
 
 </components>

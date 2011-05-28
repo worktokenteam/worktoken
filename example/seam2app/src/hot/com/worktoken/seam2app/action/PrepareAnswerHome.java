@@ -10,16 +10,6 @@ import org.jboss.seam.framework.EntityHome;
 
 import javax.persistence.EntityManager;
 
-
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Factory;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.framework.EntityHome;
-
-import javax.persistence.EntityManager;
-
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
@@ -42,5 +32,11 @@ public class PrepareAnswerHome extends EntityHome<PrepareAnswer> {
         } else {
             super.setId(id);
         }
+    }
+
+    public void complete() {
+        em.flush();
+        em.clear();
+        getInstance().complete();
     }
 }

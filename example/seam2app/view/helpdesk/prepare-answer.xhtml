@@ -14,7 +14,7 @@
                 <f:facet name="header">Task #{prepareAnswer.instanceId}, #{prepareAnswer.subject}</f:facet>
 
                 <div>
-                    #{prepareAnswer.helpdeskProcess.comments}
+                    <h:outputText escape="false" value="#{prepareAnswer.helpdeskProcess.htmlComments}"/>
                 </div>
                 <div>
                     <h:panelGrid columns="2" rowClasses="prop" columnClasses="name,value">
@@ -26,7 +26,7 @@
             </rich:panel>
 
             <div class="actionButtons">
-                <h:commandButton id="submit" value="Complete" action="#{prepareAnswer.complete}"/>
+                <h:commandButton id="submit" value="Complete" action="#{prepareAnswerHome.complete}"/>
             </div>
 
         </h:form>

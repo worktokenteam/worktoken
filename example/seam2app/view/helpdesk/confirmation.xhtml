@@ -1,0 +1,38 @@
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:s="http://jboss.com/products/seam/taglib"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:rich="http://richfaces.org/rich"
+                template="../layout/template.xhtml">
+
+    <ui:define name="body">
+        <h:form id="task">
+            <rich:panel>
+                <f:facet name="header">Confirmation for process #{receiveConfirmation.process.instanceId}</f:facet>
+
+                <div>
+                    <h:outputText escape="false" value="#{receiveConfirmation.helpDeskProcess.htmlComments}"/>
+                </div>
+                <div>
+                    <h:panelGrid columns="2" rowClasses="prop" columnClasses="name,value">
+                        <h:outputLabel for="message">Message</h:outputLabel>
+                        <h:inputText id="message"
+                                     value="#{receiveConfirmationHome.message}"/>
+                        <h:outputLabel for="accepted">accepted?</h:outputLabel>
+                        <h:selectBooleanCheckbox id="accepted"
+                                     value="#{receiveConfirmationHome.accepted}"/>
+                    </h:panelGrid>
+                </div>
+            </rich:panel>
+
+            <div class="actionButtons">
+                <h:commandButton id="submit" value="Confirm" action="#{receiveConfirmationHome.complete}"/>
+            </div>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>

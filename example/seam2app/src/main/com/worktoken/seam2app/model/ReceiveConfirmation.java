@@ -44,4 +44,8 @@ public class ReceiveConfirmation extends CatchEventNode {
         }
         tokenOut(token);
     }
+
+    public HelpDeskProcess getHelpDeskProcess() {
+        return (HelpDeskProcess) getProcess();
+    }
 }
