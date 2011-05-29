@@ -94,7 +94,7 @@ public class HelpDesk {
 
     /**
      * Test help desk process, path 1
-     *
+     * <p/>
      * Path 1: Receive question - Canned answer lookup fails - Operator prepares answer - Process ends on time out while
      * waiting for customer response.
      *
@@ -118,7 +118,7 @@ public class HelpDesk {
         Assert.assertTrue(processId > 0);
         HelpDeskProcess process = em.find(HelpDeskProcess.class, processId);
         Assert.assertNotNull(process);
-        em.detach(process);
+        em.clear();
 
         /*
         Sending "Service request" message. Please note that definition is the one of the message, not the event
@@ -151,7 +151,7 @@ public class HelpDesk {
         /*
         IMPORTANT: do not forget to detach the user task, otherwise we will have stale entity soon.
          */
-        em.detach(userTask);
+        em.clear();
         Assert.assertTrue(subject.equals(userTask.getSubject()));
         Assert.assertTrue(userTask.getTaskState() == TaskState.Created);
 
@@ -166,17 +166,14 @@ public class HelpDesk {
         Assert.assertTrue(session.isRunning());
         List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
-
-        for (EventTrigger trigger : triggers) {
-            em.detach(trigger);
-        }
+        em.clear();
 
         System.out.println("Adjusting timer alarm time to ensure it is ready to be fired");
         TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getSingleResult();
         timer.setNextAlarm(new Date());
         em.merge(timer);
         em.flush();
-        em.detach(timer);
+        em.clear();
         System.out.println("Committing application transaction.");
         em.getTransaction().commit();
         System.out.println("Closing Entity Manager");
@@ -194,7 +191,7 @@ public class HelpDesk {
 
     /**
      * Test help desk process, path 2
-     *
+     * <p/>
      * Path 1: Receive question - Canned answer lookup succeeds - Process ends on receiving positive confirmation
      * from customer.
      *
@@ -215,7 +212,7 @@ public class HelpDesk {
         Assert.assertTrue(processId > 0);
         HelpDeskProcess process = em.find(HelpDeskProcess.class, processId);
         Assert.assertNotNull(process);
-        em.detach(process);
+        em.clear();
 
         /*
         Sending "Service request" message. Please note that definition is the one of the message, not the event

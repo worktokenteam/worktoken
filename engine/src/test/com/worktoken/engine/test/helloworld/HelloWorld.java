@@ -94,7 +94,7 @@ public class HelloWorld {
         EntityManager em = emf.createEntityManager();
         BusinessProcess process = em.find(BusinessProcess.class, processId);
         Assert.assertNotNull(process);
-        em.detach(process);
+        em.clear();
         em.close();
 
 
