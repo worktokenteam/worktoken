@@ -32,7 +32,7 @@ import java.util.List;
         @NamedQuery(name = "EventBasedGateway.findByProcess",
                     query = "SELECT n FROM EventBasedGateway n WHERE n.process = :process"),
         @NamedQuery(name = "EventBasedGateway.findByDefIdAndProcess",
-                    query = "SELECT n FROM EventBasedGateway n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM EventBasedGateway n WHERE n.defId = :defId AND n.process = :process")
 })
 
 public class EventBasedGateway extends Node {

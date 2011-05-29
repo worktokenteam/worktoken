@@ -28,7 +28,7 @@ import javax.persistence.NamedQuery;
         @NamedQuery(name = "BusinessRuleTask.findByProcess",
                     query = "SELECT n FROM BusinessRuleTask n WHERE n.process = :process"),
         @NamedQuery(name = "BusinessRuleTask.findByDefIdAndProcess",
-                    query = "SELECT n FROM BusinessRuleTask n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM BusinessRuleTask n WHERE n.defId = :defId AND n.process = :process")
 })
 public class BusinessRuleTask extends Node {
     @Override

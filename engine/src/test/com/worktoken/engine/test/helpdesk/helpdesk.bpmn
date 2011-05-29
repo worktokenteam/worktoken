@@ -56,6 +56,7 @@
 		<sequenceFlow id="com_worktoken_helpdesk_1_38" name="Yes" sourceRef="com_worktoken_helpdesk_1_15" targetRef="com_worktoken_helpdesk_1_11">
         </sequenceFlow>
 		<userTask completionQuantity="1" id="com_worktoken_helpdesk_1_17" implementation="##unspecified" isForCompensation="false" name="Prepare answer" startQuantity="1">
+            <documentation>Prepare answer</documentation>
             <incoming>com_worktoken_helpdesk_1_18</incoming>
 			<incoming>com_worktoken_helpdesk_1_26</incoming>
 			<outgoing>com_worktoken_helpdesk_1_27</outgoing>

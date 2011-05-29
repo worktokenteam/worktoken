@@ -33,7 +33,7 @@ import java.util.Set;
         @NamedQuery(name = "ThrowEventNode.findByProcess",
                     query = "SELECT n FROM ThrowEventNode n WHERE n.process = :process"),
         @NamedQuery(name = "ThrowEventNode.findByDefIdAndProcess",
-                    query = "SELECT n FROM ThrowEventNode n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM ThrowEventNode n WHERE n.defId = :defId AND n.process = :process")
 })
 public class ThrowEventNode extends Node {
 

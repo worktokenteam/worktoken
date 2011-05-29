@@ -16,10 +16,14 @@
 
 package com.worktoken.model;
 
+import com.worktoken.engine.BPMNUtils;
 import com.worktoken.engine.SessionRegistry;
 import com.worktoken.engine.WorkSession;
+import org.omg.spec.bpmn._20100524.model.TDocumentation;
+import org.omg.spec.bpmn._20100524.model.TFlowNode;
 
 import javax.persistence.*;
+import java.util.List;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
@@ -30,39 +34,34 @@ import javax.persistence.*;
         @NamedQuery(name = "Node.findByProcess",
                     query = "SELECT n FROM Node n WHERE n.process = :process"),
         @NamedQuery(name = "Node.findByDefIdAndProcess",
-                    query = "SELECT n FROM Node n WHERE n.nodeId = :defId AND n.process = :process"),
+                    query = "SELECT n FROM Node n WHERE n.defId = :defId AND n.process = :process"),
         @NamedQuery(name = "Node.countByProcess",
                     query =  "SELECT COUNT(n) FROM Node n WHERE n.process = :process"),
         @NamedQuery(name = "Node.className",
-                    query = "SELECT className FROM Node n WHERE n.instanceId = :id")
-
+                    query = "SELECT className FROM Node n WHERE n.id = :id")
 })
 public abstract class Node {
     @Id @GeneratedValue(strategy = GenerationType.TABLE)
-    private long instanceId;
+    private long id;
     @Version
     private long version;
-    private String nodeId;
+    private String defId;
     private String className;
     @ManyToOne(fetch = FetchType.EAGER)
     private BusinessProcess process;
     @Transient
     private WorkSession session;
 
-    public long getInstanceId() {
-        return instanceId;
+    public long getId() {
+        return id;
     }
 
-    public void setInstanceId(long instanceId) {
-        this.instanceId = instanceId;
+    public String getDefId() {
+        return defId;
     }
 
-    public String getNodeId() {
-        return nodeId;
-    }
-
-    public void setNodeId(String nodeId) {
-        this.nodeId = nodeId;
+    public void setDefId(String nodeId) {
+        this.defId = nodeId;
     }
 
     public BusinessProcess getProcess() {
@@ -86,15 +85,6 @@ public abstract class Node {
 
     public abstract void tokenIn(WorkToken token, Connector connector);
 
-    public boolean isInstanceOf(String className) {
-        try {
-            Class t = Class.forName(className);
-            return this.getClass().isInstance(t);
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
     protected void tokenOut(WorkToken token) {
         getSession().sendToken(token, this);
     }
@@ -113,5 +103,17 @@ public abstract class Node {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public TFlowNode getDefinition() {
+        return BPMNUtils.getFlowNode(defId, getProcess().getDefinition());
+    }
+
+    public List<TDocumentation> getDocumentation() {
+        TFlowNode definition = getDefinition();
+        if (definition == null) {
+            throw new IllegalStateException("Failed to find definition for node \"" + defId + "\"");
+        }
+        return definition.getDocumentation();
     }
 }

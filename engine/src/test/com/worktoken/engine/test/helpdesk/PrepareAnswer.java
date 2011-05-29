@@ -18,7 +18,6 @@ package com.worktoken.engine.test.helpdesk;
 
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.annotation.RefType;
-import com.worktoken.engine.test.helpdesk.HelpDeskProcess;
 import com.worktoken.model.Connector;
 import com.worktoken.model.UserTask;
 import com.worktoken.model.WorkToken;
@@ -53,7 +52,6 @@ public class PrepareAnswer extends UserTask {
     public String getViewId() {
         return viewId;
     }
-
 
     public String getAnswer() {
         return answer;

@@ -33,13 +33,13 @@ import javax.persistence.NamedQuery;
         @NamedQuery(name = "ExclusiveGateway.findByProcess",
                     query = "SELECT n FROM ExclusiveGateway n WHERE n.process = :process"),
         @NamedQuery(name = "ExclusiveGateway.findByDefIdAndProcess",
-                    query = "SELECT n FROM ExclusiveGateway n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM ExclusiveGateway n WHERE n.defId = :defId AND n.process = :process")
 })
 public class ExclusiveGateway extends Node {
     @Override
     public void tokenIn(WorkToken token, Connector connectorIn) {
         TProcess tProcess = getProcess().getDefinition();
-        TExclusiveGateway gateway = (TExclusiveGateway) BPMNUtils.getFlowNode(getNodeId(), tProcess);
+        TExclusiveGateway gateway = (TExclusiveGateway) BPMNUtils.getFlowNode(getDefId(), tProcess);
         final String myName = gateway.getName();
         TSequenceFlow tSequenceFlow = null;
         if (myName != null && !myName.isEmpty() && token.getData().containsKey(myName)) {

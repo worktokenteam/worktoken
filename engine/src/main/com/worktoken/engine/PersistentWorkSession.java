@@ -313,7 +313,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         BusinessProcess process = fromNode.getProcess();
         tokenFromNode.setProcessInstanceId(process.getInstanceId());
         tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
-        tokenFromNode.setNodeId(fromNode.getNodeId());
+        tokenFromNode.setNodeId(fromNode.getDefId());
         tokenFromNode.setConnector(connector);
         workItems.add(tokenFromNode);
     }
@@ -363,7 +363,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
                             throw new IllegalStateException("Not implemented yet");
                         }
                     } else {
-                        throw new IllegalStateException("Owner node for catch event " + eventNode.getNodeId() + " does not exist");
+                        throw new IllegalStateException("Owner node for catch event " + eventNode.getDefId() + " does not exist");
                     }
                 }
             } else {
@@ -373,31 +373,6 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
         workItems.add(t4n);
         releaseEntityManager();
-    }
-
-    // ========================================================================================================= getNode
-
-    private Node getNode(long id) {
-        String className = (String) em.get().createNamedQuery("Node.className").setParameter("id", id).getSingleResult();
-        if (className != null && !className.isEmpty()) {
-            try {
-                Class clazz = Class.forName(className);
-                @SuppressWarnings({"unchecked"})
-                Object entity = em.get().find(clazz, id);
-                if (entity == null) {
-                    throw new IllegalStateException("Node id:" + id + " is not an instance of " + className);
-                }
-                if (entity instanceof Node) {
-                    return (Node) entity;
-                }
-                throw new IllegalStateException("Object of class " + className + " with id:" + id + " is not a subclass of " + Node.class.getName());
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-                throw new IllegalStateException("Can't instantiate Class " + className);
-            }
-        } else {
-            throw new IllegalStateException("No class name for node or node id:" + id + " not found");
-        }
     }
 
     // ============================================================================================== handleGatewayEvent
@@ -414,15 +389,15 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         if (em.get().contains(eventNode)) {
             em.get().remove(eventNode);
         }
-        TEventBasedGateway tGateway = BPMNUtils.find(gateway.getNodeId(), getProcessDefinition(gateway.getProcess().getDefinitionId()), TEventBasedGateway.class);
+        TEventBasedGateway tGateway = BPMNUtils.find(gateway.getDefId(), getProcessDefinition(gateway.getProcess().getDefinitionId()), TEventBasedGateway.class);
         if (tGateway.getEventGatewayType() == TEventBasedGatewayType.EXCLUSIVE) {
             /*
             if exclusive gateway, delete all other target nodes
              */
-            for (CatchEventNode catchEventNode : (List<CatchEventNode>) em.get().createNamedQuery("CatchEventNode.findAttached").setParameter("nodeId", gateway.getInstanceId()).getResultList()) {
+            for (CatchEventNode catchEventNode : (List<CatchEventNode>) em.get().createNamedQuery("CatchEventNode.findAttached").setParameter("nodeId", gateway.getId()).getResultList()) {
                 em.get().remove(catchEventNode);
             }
-            for (ReceiveTask receiveTask : (List<ReceiveTask>) em.get().createNamedQuery("ReceiveTask.findAttached").setParameter("nodeId", gateway.getInstanceId()).getResultList()) {
+            for (ReceiveTask receiveTask : (List<ReceiveTask>) em.get().createNamedQuery("ReceiveTask.findAttached").setParameter("nodeId", gateway.getId()).getResultList()) {
                 em.get().remove(receiveTask);
             }
             /*
@@ -435,8 +410,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             /*
             if parallel gateway, delete it only if no targets remaining
              */
-            Long targetCount = (Long) em.get().createNamedQuery("CatchEventNode.countAttached").setParameter("nodeId", gateway.getInstanceId()).getSingleResult();
-            targetCount += (Long) em.get().createNamedQuery("ReceiveTask.countAttached").setParameter("nodeId", gateway.getInstanceId()).getSingleResult();
+            Long targetCount = (Long) em.get().createNamedQuery("CatchEventNode.countAttached").setParameter("nodeId", gateway.getId()).getSingleResult();
+            targetCount += (Long) em.get().createNamedQuery("ReceiveTask.countAttached").setParameter("nodeId", gateway.getId()).getSingleResult();
             if (targetCount == 0) {
                 if (em.get().contains(gateway)) {
                     em.get().remove(gateway);
@@ -458,7 +433,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         BusinessProcess process = fromNode.getProcess();
         tokenFromNode.setProcessInstanceId(process.getInstanceId());
         tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
-        tokenFromNode.setNodeId(fromNode.getNodeId());
+        tokenFromNode.setNodeId(fromNode.getDefId());
         workItems.add(tokenFromNode);
     }
 
@@ -753,9 +728,9 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             persist(node);
             for (Node target : node.getTargets()) {
                 if (target instanceof CatchEventNode) {
-                    ((CatchEventNode) target).setOwnerId(node.getInstanceId());
+                    ((CatchEventNode) target).setOwnerId(node.getId());
                 } else if (target instanceof ReceiveTask) {
-                    ((ReceiveTask) target).setOwnerId(node.getInstanceId());
+                    ((ReceiveTask) target).setOwnerId(node.getId());
                 }
                 persist(target);
             }
@@ -803,7 +778,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
             node = (Node) entity;
             node.setClassName(ac.getClazz());
         }
-        node.setNodeId(tNode.getId());
+        node.setDefId(tNode.getId());
         node.setProcess(process);
         return (T) node;
     }
@@ -1293,5 +1268,30 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     protected void markRollbackTransaction() {
         em.get().getTransaction().setRollbackOnly();
+    }
+
+    // ========================================================================================================= getNode
+
+    private Node getNode(long id) {
+        String className = (String) em.get().createNamedQuery("Node.className").setParameter("id", id).getSingleResult();
+        if (className != null && !className.isEmpty()) {
+            try {
+                Class clazz = Class.forName(className);
+                @SuppressWarnings({"unchecked"})
+                Object entity = em.get().find(clazz, id);
+                if (entity == null) {
+                    throw new IllegalStateException("Node id:" + id + " is not an instance of " + className);
+                }
+                if (entity instanceof Node) {
+                    return (Node) entity;
+                }
+                throw new IllegalStateException("Object of class " + className + " with id:" + id + " is not a subclass of " + Node.class.getName());
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                throw new IllegalStateException("Can't instantiate Class " + className);
+            }
+        } else {
+            throw new IllegalStateException("No class name for node or node id:" + id + " not found");
+        }
     }
 }

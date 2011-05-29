@@ -44,15 +44,9 @@ public class PrepareAnswer extends UserTask {
     }
 
     @Override
-    public String getDescription() {
-        return "Prepare answer";
-    }
-
-    @Override
     public String getViewId() {
         return viewId;
     }
-
 
     public String getAnswer() {
         return answer;

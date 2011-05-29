@@ -29,7 +29,7 @@ import javax.persistence.NamedQuery;
         @NamedQuery(name = "ReceiveTask.findByProcess",
                     query = "SELECT n FROM ReceiveTask n WHERE n.process = :process"),
         @NamedQuery(name = "ReceiveTask.findByDefIdAndProcess",
-                    query = "SELECT n FROM ReceiveTask n WHERE n.nodeId = :defId AND n.process = :process"),
+                    query = "SELECT n FROM ReceiveTask n WHERE n.defId = :defId AND n.process = :process"),
         @NamedQuery(name = "ReceiveTask.findStartNodesByProcess",
                     query = "SELECT n FROM ReceiveTask n WHERE n.process = :process AND n.startEvent = true"),
         @NamedQuery(name = "ReceiveTask.findAttached",

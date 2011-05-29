@@ -29,7 +29,7 @@ import javax.persistence.NamedQuery;
         @NamedQuery(name = "SendTask.findByProcess",
                     query = "SELECT n FROM SendTask n WHERE n.process = :process"),
         @NamedQuery(name = "SendTask.findByDefIdAndProcess",
-                    query = "SELECT n FROM SendTask n WHERE n.nodeId = :defId AND n.process = :process")
+                    query = "SELECT n FROM SendTask n WHERE n.defId = :defId AND n.process = :process")
 })
 public class SendTask extends Node {
 

@@ -28,7 +28,7 @@ import java.util.Set;
         @NamedQuery(name = "CatchEventNode.findByProcess",
                     query = "SELECT n FROM CatchEventNode n WHERE n.process = :process"),
         @NamedQuery(name = "CatchEventNode.findByDefIdAndProcess",
-                    query = "SELECT n FROM CatchEventNode n WHERE n.nodeId = :defId AND n.process = :process"),
+                    query = "SELECT n FROM CatchEventNode n WHERE n.defId = :defId AND n.process = :process"),
         @NamedQuery(name = "CatchEventNode.findStartNodesByProcess",
                     query = "SELECT n FROM CatchEventNode n WHERE n.process = :process AND n.startEvent = true"),
         @NamedQuery(name = "CatchEventNode.findAttached",
