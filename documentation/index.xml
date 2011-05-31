@@ -9,6 +9,6 @@
             <orgname>Rush Project, Inc</orgname>
         </author>
     </info>
-    <xi:include href="introduction/index.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
-    <xi:include href="gettingstarted/index.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="introduction.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+    <xi:include href="gettingstarted.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 </book>

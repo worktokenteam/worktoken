@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0">
+    <title>Getting Started</title>
+    <section>
+        <title>Hello World!</title>
+        <section>
+            <title>The process: diagram</title>
+            <figure>
+                <title>Hello World process diagram</title>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="helloworld.jpg"/>
+                    </imageobject>
+                </mediaobject>
+            </figure>
+        </section>
+        <section>
+            <title>The process: XML</title>
+            <programlisting language="xml">&lt;definitions id="HelloWorld" targetNamespace="http://www.omg.org/bpmn20"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+
+    &lt;process id="helloWorld" name="Hello World"><co xml:id="helloWorld-process-co" linkends="co-helloWorld-process"/>
+        &lt;startEvent id="start" name="Start">
+            &lt;outgoing>start2sayHello&lt;/outgoing>
+        &lt;/startEvent>
+        &lt;userTask id="sayHello" name="Say Hello">
+            &lt;incoming>start2sayHello&lt;/incoming>
+            &lt;outgoing>sayHello2end&lt;/outgoing>
+        &lt;/userTask>
+        &lt;sequenceFlow id="start2sayHello" sourceRef="start" targetRef="sayHello"/>
+        &lt;endEvent id="end" name="End">
+            &lt;incoming>sayHello2end&lt;/incoming>
+        &lt;/endEvent>
+        &lt;sequenceFlow id="sayHello2end" sourceRef="sayHello" targetRef="end" />
+    &lt;/process>
+
+&lt;/definitions>                
+            </programlisting>
+            <calloutlist>
+                <callout arearefs="helloWorld-process-co" xml:id="co-helloWorld-process">
+                    <para>Any flow element, such as process, task, gateway may have both <emphasis role="italic">id</emphasis> and <emphasis role="italic">name</emphasis>
+                        attributes. The <emphasis role="italic">id</emphasis> attribute is used to
+                        uniquely identify elements. It is required if the element is to be
+                        referenced by another element. The <emphasis role="italic">name</emphasis>
+                        attribute serves as descriptive name of the element. When referencing BPMN
+                        elements from Work Token annotations <emphasis role="italic">id</emphasis>
+                        is preferred reference type, because it must be unique. However, not all
+                        BPMN diagram editors allow setting custom values for <emphasis role="italic">id</emphasis> attributes. Some editors may even regenerate ids on each
+                        update of the diagram. This is why Work Token annotations may use <emphasis role="italic">name</emphasis> attribute instead of <emphasis role="italic">id</emphasis>.</para>
+                </callout>
+            </calloutlist>
+        </section>
+        <section>
+            <title>Java code</title>
+            <programlisting language="java">public class HelloWorld {
+
+    private Connection connection;
+    private EntityManagerFactory emf;
+    private PersistentWorkSession session;
+
+    @Before
+    public void setUp() throws Exception {
+
+        /*
+        Start database and create entity manager factory
+         */
+        connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
+        emf = Persistence.createEntityManagerFactory("testPU");
+
+        /*
+        Create annotation library
+         */
+        List&lt;Class> annotatedClasses = new ArrayList&lt;Class>();
+        annotatedClasses.add(SayHello.class);
+        ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
+        dictionary.build();
+
+        /*
+        Create work session and load process definition
+         */
+        session = new PersistentWorkSession("com.worktoken.helloworld", emf, dictionary);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        session.close();
+        if (emf != null) {
+            emf.close();
+        }
+        connection.createStatement().execute("SHUTDOWN");
+    }
+
+    @Test
+    public void testHelloWorld() throws Exception {
+
+        long processId = session.createProcess("helloWorld");
+        Assert.assertTrue(processId > 0);
+
+
+        /*
+        Wait a couple of seconds for the process to reach User Task node (Say Hello)
+         */
+        Thread.sleep(2000);
+
+        List&lt;UserTask> userTasks = session.getUserTasks();
+        Assert.assertTrue(userTasks.size() == 1);
+        Assert.assertTrue(userTasks.get(0) instanceof SayHello);
+        SayHello sayHello = (SayHello) userTasks.get(0);
+        Assert.assertTrue(sayHello.getTaskState() == TaskState.Created);
+        /*
+        Complete user task
+         */
+        sayHello.complete();
+
+        /*
+        Wait a couple of seconds for the process to end
+         */
+        Thread.sleep(2000);
+
+
+        em = emf.createEntityManager();
+        Assert.assertNull(em.find(BusinessProcess.class, processId));
+        em.close();
+    }
+}                            </programlisting>
+        </section>
+    </section>
+</chapter>
