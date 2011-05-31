@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0">
+    <title>Getting Started</title>
+    <section>
+        <title>Hello World!</title>
+        <section>
+            <title>The process: diagram</title>
+            <figure>
+                <title>Hello World</title>
+                <mediaobject>
+                    <imageobject>
+                        <imagedata fileref="helloworld.jpg"/>
+                    </imageobject>
+                </mediaobject>
+            </figure>
+        </section>
+        <section>
+            <title>The process: XML</title>
+            <programlisting language="xml">&lt;definitions id="HelloWorld" targetNamespace="http://www.omg.org/bpmn20"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+    &lt;process id="helloWorld" name="Hello World">
+        &lt;startEvent id="_2_1" name="Start">
+            &lt;outgoing>_2_5&lt;/outgoing>
+        &lt;/startEvent>
+        &lt;userTask completionQuantity="1" id="_2_4" implementation="##unspecified"
+                  isForCompensation="false"
+                  name="Say Hello" startQuantity="1">
+            &lt;incoming>_2_5&lt;/incoming>
+            &lt;outgoing>_2_7&lt;/outgoing>
+        &lt;/userTask>
+        &lt;sequenceFlow id="_2_5" name="" sourceRef="_2_1" targetRef="_2_4">
+        &lt;/sequenceFlow>
+        &lt;endEvent id="_2_6" name="End">
+            &lt;incoming>_2_7&lt;/incoming>
+        &lt;/endEvent>
+        &lt;sequenceFlow id="_2_7" name="" sourceRef="_2_4" targetRef="_2_6">
+        &lt;/sequenceFlow>
+    &lt;/process>
+&lt;/definitions>                
+            </programlisting>
+        </section>
+    </section>
+</chapter>
