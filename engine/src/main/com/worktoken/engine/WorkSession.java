@@ -64,7 +64,7 @@ public interface WorkSession {
 
 
     /**
-     * Parse BPMN specification and register processes.
+     * Parse BPMN specification and register process definitions.
      *
      *
      * @param stream
@@ -73,18 +73,17 @@ public interface WorkSession {
      */
     public TDefinitions readDefinitions(InputStream stream) throws JAXBException;
 
-    public TDefinitions getDefinitions(String id);
+    public TDefinitions getDefinitions(String defId);
 
     public Set<String> getDefinitionsIds();
 
-    public void dropDefinitions(final String id);
+    public void dropDefinitions(final String defId);
 
-    public long createProcess(final String id);
+    public long createProcess(final String defId);
 
     public void sendEventToken(EventToken eventToken, long processId);
 
     public void close() throws InterruptedException;
 
-    public TProcess getProcessDefinition(String id);
-
+    public TProcess getProcessDefinition(String defId);
 }
