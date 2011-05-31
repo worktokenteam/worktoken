@@ -6,7 +6,7 @@
         <section>
             <title>The process: diagram</title>
             <figure>
-                <title>Hello World</title>
+                <title>Hello World process diagram</title>
                 <mediaobject>
                     <imageobject>
                         <imagedata fileref="helloworld.jpg"/>
@@ -18,26 +18,37 @@
             <title>The process: XML</title>
             <programlisting language="xml">&lt;definitions id="HelloWorld" targetNamespace="http://www.omg.org/bpmn20"
              xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
-    &lt;process id="helloWorld" name="Hello World">
-        &lt;startEvent id="_2_1" name="Start">
-            &lt;outgoing>_2_5&lt;/outgoing>
+
+    &lt;process id="helloWorld" name="Hello World"><co xml:id="helloWorld-process-co" linkends="co-helloWorld-process" />
+        &lt;startEvent id="start" name="Start">
+            &lt;outgoing>start2sayHello&lt;/outgoing>
         &lt;/startEvent>
-        &lt;userTask completionQuantity="1" id="_2_4" implementation="##unspecified"
-                  isForCompensation="false"
-                  name="Say Hello" startQuantity="1">
-            &lt;incoming>_2_5&lt;/incoming>
-            &lt;outgoing>_2_7&lt;/outgoing>
+        &lt;userTask id="sayHello" name="Say Hello">
+            &lt;incoming>start2sayHello&lt;/incoming>
+            &lt;outgoing>sayHello2end&lt;/outgoing>
         &lt;/userTask>
-        &lt;sequenceFlow id="_2_5" name="" sourceRef="_2_1" targetRef="_2_4">
-        &lt;/sequenceFlow>
-        &lt;endEvent id="_2_6" name="End">
-            &lt;incoming>_2_7&lt;/incoming>
+        &lt;sequenceFlow id="start2sayHello" sourceRef="start" targetRef="sayHello"/>
+        &lt;endEvent id="end" name="End">
+            &lt;incoming>sayHello2end&lt;/incoming>
         &lt;/endEvent>
-        &lt;sequenceFlow id="_2_7" name="" sourceRef="_2_4" targetRef="_2_6">
-        &lt;/sequenceFlow>
+        &lt;sequenceFlow id="sayHello2end" sourceRef="sayHello" targetRef="end" />
     &lt;/process>
+
 &lt;/definitions>                
             </programlisting>
+            <calloutlist>
+                <callout arearefs="helloWorld-process-co" xml:id="co-helloWorld-process">
+                    <para>Any flow element, such as process, task, gateway may have both id and name
+                        attributes. The id attribute is used to uniquely identify elements. It is
+                        required if the element is to be referenced by another element. The name
+                        attribute serves as descriptive name of the element. When referencing BPMN
+                        elements from Work Token annotations id is preferred reference type, because
+                        it must be unique. However, not all BPMN diagram editors allow setting
+                        custom values for id attributes. Some editors may even regenerate ids on
+                        each update of the diagram. This is why Work Token annotations may use name
+                        attribute instead of id.</para>
+                </callout>
+            </calloutlist>
         </section>
     </section>
 </chapter>
