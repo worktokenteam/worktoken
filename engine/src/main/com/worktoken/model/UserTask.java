@@ -38,6 +38,7 @@ import java.util.List;
 public class UserTask  extends Node {
     private TaskState taskState;
     private boolean suspended;
+    private String laneDefId;
 
     public UserTask() {
         taskState = TaskState.Created;
@@ -92,5 +93,13 @@ public class UserTask  extends Node {
             }
         }
         return "User task";
+    }
+
+    public String getLaneDefId() {
+        return laneDefId;
+    }
+
+    public void setLaneDefId(String laneDefId) {
+        this.laneDefId = laneDefId;
     }
 }

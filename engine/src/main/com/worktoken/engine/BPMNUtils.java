@@ -111,5 +111,31 @@ public class BPMNUtils {
         return nodeList;
     }
 
+    private static TLane findLaneForNode(TFlowNode tNode, TLaneSet tLaneSet) {
+        for (TLane tLane : tLaneSet.getLane()) {
+            if (tLane.getChildLaneSet() != null) {
+                TLane l = findLaneForNode(tNode, tLane.getChildLaneSet());
+                if (l != null) {
+                    return l;
+                }
+            } else {
+                for (JAXBElement<Object>  flowNodeRef : tLane.getFlowNodeRef()) {
+                    if (flowNodeRef.getValue() instanceof TFlowNode && ((TFlowNode)flowNodeRef.getValue()).getId().equals(tNode.getId())) {
+                        return tLane;
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
+    public static TLane findLaneForNode(TFlowNode tNode, TProcess tProcess) {
+        for (TLaneSet laneSet : tProcess.getLaneSet()) {
+            TLane tLane = findLaneForNode(tNode, laneSet);
+            if (tLane != null) {
+                return tLane;
+            }
+        }
+        return null;
+    }
 }

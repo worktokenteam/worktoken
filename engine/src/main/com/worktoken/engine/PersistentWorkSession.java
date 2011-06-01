@@ -706,6 +706,10 @@ public class PersistentWorkSession implements WorkSession, Runnable {
         }
         if (tNode instanceof TUserTask) {
             UserTask node = instantiateNode(tNode, UserTask.class, process);
+            TLane lane = BPMNUtils.findLaneForNode(tNode, process.getDefinition());
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             persist(node);
             return node;
