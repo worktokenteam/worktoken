@@ -16,7 +16,11 @@
 
 package com.worktoken.model;
 
+import com.sun.jmx.snmp.tasks.Task;
+
 /**
+ * Implementation of WS-HumanTask, v 1.0
+ *
  * @author Alex Pavlov (alex@rushproject.com)
  */
 public class HumanTask extends UserTask {
@@ -27,7 +31,25 @@ public class HumanTask extends UserTask {
         taskState = TaskState.Created;
     }
 
+    private String getSignature() {
+        return "defId=" + getDefId() + ", instanceId=" + getId() + ", process=" + getProcess().getDefinitionId();
+    }
+
+    private void assertNotSuspended(String methodName) {
+        if (suspended) {
+            throw new IllegalStateException("Call to " + methodName + "() while task (" + getSignature() + ") is suspended. Please call resume() first.");
+        }
+    }
+
+    public void start() {
+        assertNotSuspended("start");
+    }
+
     public void sendResult(WorkToken token) {
+        assertNotSuspended("sendResult");
+        if (taskState != TaskState.InProgress) {
+            throw new IllegalStateException("Call to sendResult while task (" + getSignature() + ") is not in InProgress state");
+        }
         taskState = TaskState.Completed;
         tokenOut(token);
     }
