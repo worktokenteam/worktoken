@@ -39,7 +39,7 @@ import java.util.concurrent.*;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 
-public class PersistentWorkSession implements WorkSession, Runnable {
+public class WorkSessionImpl implements WorkSession, Runnable {
 
     private String sessionId;
 
@@ -64,17 +64,17 @@ public class PersistentWorkSession implements WorkSession, Runnable {
     private HashMap<String, MessageDefinition> messageDefinitions;
     private long threadId;
 
-    // =========================================================================================== PersistentWorkSession
+    // =========================================================================================== WorkSessionImpl
 
-    public PersistentWorkSession(String id, EntityManagerFactory emf, AnnotationDictionary dictionary) {
+    public WorkSessionImpl(String id, EntityManagerFactory emf, AnnotationDictionary dictionary) {
         if (id == null || id.isEmpty()) {
-            throw new IllegalArgumentException("Null or missing session id in PersistentWorkSession constructor");
+            throw new IllegalArgumentException("Null or missing session id in WorkSessionImpl constructor");
         }
         if (SessionRegistry.getSession(id) != null) {
-            throw new IllegalArgumentException("Duplicate session id in PersistentWorkSession constructor");
+            throw new IllegalArgumentException("Duplicate session id in WorkSessionImpl constructor");
         }
         if (emf == null) {
-            throw new IllegalArgumentException("Null EntityManagerFactory in PersistentWorkSession constructor");
+            throw new IllegalArgumentException("Null EntityManagerFactory in WorkSessionImpl constructor");
         }
         this.emf = emf;
         this.sessionId = id;
@@ -1119,7 +1119,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
      */
     // ========================================================================================================= persist
 
-    private void persist(final Object o) {
+    @Override
+    public void persist(final Object o) {
         if (isRunner()) {
             em.get().persist(o);
         } else {
@@ -1153,7 +1154,8 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     // =========================================================================================================== merge
 
-    private Object merge(final Object o) {
+    @Override
+    public Object merge(final Object o) {
         if (isRunner()) {
             return em.get().merge(o);
         } else {
@@ -1195,6 +1197,7 @@ public class PersistentWorkSession implements WorkSession, Runnable {
 
     // ==================================================================================================== getUserTasks
 
+    @Override
     public List<UserTask> getUserTasks() {
         if (isRunner()) {
             return getUserTasks(em.get());

@@ -17,7 +17,7 @@
 package com.worktoken.engine.test.helloworld;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
-import com.worktoken.engine.PersistentWorkSession;
+import com.worktoken.engine.WorkSessionImpl;
 import com.worktoken.model.BusinessProcess;
 import com.worktoken.model.TaskState;
 import com.worktoken.model.UserTask;
@@ -42,7 +42,7 @@ public class HelloWorld {
 
     private Connection connection;
     private EntityManagerFactory emf;
-    private PersistentWorkSession session;
+    private WorkSessionImpl session;
 
     @Before
     public void setUp() throws Exception {
@@ -66,7 +66,7 @@ public class HelloWorld {
         /*
         Create work session and load process definition
          */
-        session = new PersistentWorkSession("com.worktoken.helloworld", emf, dictionary);
+        session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
         TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helloworld.bpmn"));
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("HelloWorld".equals(tDefinitions.getId()));

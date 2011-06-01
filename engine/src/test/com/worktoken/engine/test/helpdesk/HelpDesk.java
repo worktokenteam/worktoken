@@ -17,7 +17,7 @@
 package com.worktoken.engine.test.helpdesk;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
-import com.worktoken.engine.PersistentWorkSession;
+import com.worktoken.engine.WorkSessionImpl;
 import com.worktoken.model.*;
 import org.junit.After;
 import org.junit.Assert;
@@ -41,7 +41,7 @@ public class HelpDesk {
 
     private Connection connection;
     private EntityManagerFactory emf;
-    private PersistentWorkSession session;
+    private WorkSessionImpl session;
 
     @Before
     public void setUp() throws Exception {
@@ -75,7 +75,7 @@ public class HelpDesk {
         /*
         Create work session and load process definition
          */
-        session = new PersistentWorkSession("com.worktoken.TestSession", emf, dictionary);
+        session = new WorkSessionImpl("com.worktoken.TestSession", emf, dictionary);
         TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helpdesk.bpmn"));
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("Definition".equals(tDefinitions.getId()));
@@ -107,8 +107,8 @@ public class HelpDesk {
         EntityManager em = emf.createEntityManager();
 
         em.getTransaction().begin();
-        long originalPollCycle = PersistentWorkSession.getTriggerPollCycle();
-        PersistentWorkSession.setTriggerPollCycle(5000L); // poll time triggers every 5 seconds
+        long originalPollCycle = WorkSessionImpl.getTriggerPollCycle();
+        WorkSessionImpl.setTriggerPollCycle(5000L); // poll time triggers every 5 seconds
 
         /*
         Create process instance. We retrieve the process entity from database for verification purposes. After
@@ -189,7 +189,7 @@ public class HelpDesk {
         em = emf.createEntityManager();
         Assert.assertNull(em.find(HelpDeskProcess.class, processId));
         em.close();
-        PersistentWorkSession.setTriggerPollCycle(originalPollCycle);
+        WorkSessionImpl.setTriggerPollCycle(originalPollCycle);
     }
 
     /**

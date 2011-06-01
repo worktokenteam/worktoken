@@ -16,15 +16,13 @@
 
 package com.worktoken.engine;
 
-import com.worktoken.model.Connector;
-import com.worktoken.model.EventToken;
-import com.worktoken.model.Node;
-import com.worktoken.model.WorkToken;
+import com.worktoken.model.*;
 import org.omg.spec.bpmn._20100524.model.TDefinitions;
 import org.omg.spec.bpmn._20100524.model.TProcess;
 
 import javax.xml.bind.JAXBException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -86,4 +84,10 @@ public interface WorkSession {
     public void close() throws InterruptedException;
 
     public TProcess getProcessDefinition(String defId);
+
+    public List<UserTask> getUserTasks();
+
+    public void persist(final Object o);
+    public Object merge(final Object o);
+
 }

@@ -19,7 +19,7 @@ package com.worktoken.model;
 import com.sun.jmx.snmp.tasks.Task;
 
 /**
- * Implementation of WS-HumanTask, v 1.0
+ * Implementation of WS-HumanTask, v 1.1
  *
  * @author Alex Pavlov (alex@rushproject.com)
  */
@@ -43,6 +43,10 @@ public class HumanTask extends UserTask {
 
     public void start() {
         assertNotSuspended("start");
+        if (taskState != TaskState.Reserved) {
+            throw new IllegalStateException("Call to start(void) while task (" + getSignature() + ") is not in Reserved state");
+        }
+        taskState = TaskState.InProgress;
     }
 
     public void sendResult(WorkToken token) {
