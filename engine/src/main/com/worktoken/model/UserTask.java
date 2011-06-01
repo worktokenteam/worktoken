@@ -36,41 +36,10 @@ import java.util.List;
                     query = "SELECT n FROM UserTask n WHERE n.defId = :defId AND n.process = :process")
 })
 public class UserTask  extends Node {
-    private TaskState taskState;
-    private boolean suspended;
     private String laneDefId;
-
-    public UserTask() {
-        taskState = TaskState.Created;
-    }
-
-    public void sendResult(WorkToken token) {
-        taskState = TaskState.Completed;
-        tokenOut(token);
-    }
-
-    public void sendResult() {
-        sendResult(new WorkToken());
-    }
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
-    }
-
-    public TaskState getTaskState() {
-        return taskState;
-    }
-
-    protected void setTaskState(TaskState taskState) {
-        this.taskState = taskState;
-    }
-
-    public boolean isSuspended() {
-        return suspended;
-    }
-
-    protected void setSuspended(boolean suspended) {
-        this.suspended = suspended;
     }
 
     public String getViewId() {

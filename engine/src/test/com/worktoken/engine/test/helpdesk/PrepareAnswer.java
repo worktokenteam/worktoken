@@ -19,6 +19,7 @@ package com.worktoken.engine.test.helpdesk;
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.annotation.RefType;
 import com.worktoken.model.Connector;
+import com.worktoken.model.HumanTask;
 import com.worktoken.model.UserTask;
 import com.worktoken.model.WorkToken;
 
@@ -29,7 +30,7 @@ import javax.persistence.Entity;
  */
 @FlowElement(nodeRef = "Prepare answer", refType = RefType.Name, processId = "process-com_worktoken_helpdesk")
 @Entity
-public class PrepareAnswer extends UserTask {
+public class PrepareAnswer extends HumanTask {
 
     private String answer;
     private static final String viewId = "/helpdesk/prepare-answer.xhtml";

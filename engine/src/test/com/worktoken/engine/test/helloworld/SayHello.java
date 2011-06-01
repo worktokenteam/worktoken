@@ -18,7 +18,7 @@ package com.worktoken.engine.test.helloworld;
 
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.annotation.RefType;
-import com.worktoken.model.UserTask;
+import com.worktoken.model.HumanTask;
 
 import javax.persistence.Entity;
 
@@ -27,7 +27,7 @@ import javax.persistence.Entity;
  */
 @FlowElement(nodeRef = "Say Hello", refType = RefType.Name, processId = "helloWorld")
 @Entity
-public class SayHello extends UserTask {
+public class SayHello extends HumanTask {
 
     @Override
     public String getDescription() {
