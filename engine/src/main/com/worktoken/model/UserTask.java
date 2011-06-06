@@ -16,12 +16,9 @@
 
 package com.worktoken.model;
 
-import org.omg.spec.bpmn._20100524.model.TDocumentation;
-
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import java.util.List;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
@@ -41,7 +38,7 @@ public class UserTask  extends Node {
     public void tokenIn(WorkToken token, Connector connector) {
     }
 
-    public String getViewId() {
+    public String getView() {
         return null;
     }
 

@@ -32,7 +32,7 @@ import javax.persistence.Entity;
 public class PrepareAnswer extends UserTask {
 
     private String answer;
-    private static final String viewId = "/helpdesk/prepare-answer.xhtml";
+    private static final String view = "/helpdesk/prepare-answer.xhtml";
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
@@ -49,8 +49,8 @@ public class PrepareAnswer extends UserTask {
     }
 
     @Override
-    public String getViewId() {
-        return viewId;
+    public String getView() {
+        return view;
     }
 
     public String getAnswer() {
