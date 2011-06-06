@@ -19,7 +19,7 @@
                 </f:facet>
                 <rich:column>
                     <f:facet name="header">Subject</f:facet>
-                    <s:link id="_#{node.id}" view="#{node.viewId}" value="#{node.subject}">
+                    <s:link id="_#{node.id}" view="#{node.view}" value="#{node.subject}">
                         <f:param name="taskid" value="#{node.id}"/>
                     </s:link>
                 </rich:column>
