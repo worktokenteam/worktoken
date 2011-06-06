@@ -59,7 +59,7 @@ public class PrepareAnswer extends UserTask {
     public void complete() {
         WorkToken token = new WorkToken();
         token.getData().put("answer", answer);
-        sendResult(token);
+        tokenOut(token);
     }
 
     public HelpDeskProcess getHelpdeskProcess() {

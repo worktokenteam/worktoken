@@ -16,8 +16,8 @@
 
 package com.worktoken.seam2app;
 
-import com.worktoken.engine.PersistentWorkSession;
 import com.worktoken.engine.WorkSession;
+import com.worktoken.engine.WorkSessionImpl;
 import com.worktoken.seam2.SeamAnnotationDictionary;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.*;
@@ -60,7 +60,7 @@ public class Engine {
         if (dictionary == null) {
             throw new IllegalStateException("Missing SeamAnnotationDictionary");
         }
-        session = new PersistentWorkSession("seam2app", emf, dictionary);
+        session = new WorkSessionImpl("seam2app", emf, dictionary);
         try {
             session.readDefinitions(getClass().getResourceAsStream(fileName));
         } catch (JAXBException e) {

@@ -19,8 +19,8 @@
                 </f:facet>
                 <rich:column>
                     <f:facet name="header">Subject</f:facet>
-                    <s:link id="_#{node.instanceId}" view="/helpdesk/confirmation.xhtml" value="ReceiveTask for process #{node.process.instanceId}">
-                        <f:param name="taskid" value="#{node.instanceId}"/>
+                    <s:link id="_#{node.id}" view="/helpdesk/confirmation.xhtml" value="ReceiveTask for process #{node.process.instanceId}">
+                        <f:param name="taskid" value="#{node.id}"/>
                     </s:link>
                 </rich:column>
             </rich:dataTable>

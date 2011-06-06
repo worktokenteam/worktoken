@@ -11,7 +11,7 @@
     <ui:define name="body">
         <h:form id="task">
             <rich:panel>
-                <f:facet name="header">Task #{prepareAnswer.instanceId}, #{prepareAnswer.subject}</f:facet>
+                <f:facet name="header">Task #{prepareAnswer.id}, #{prepareAnswer.subject}</f:facet>
 
                 <div>
                     <h:outputText escape="false" value="#{prepareAnswer.helpdeskProcess.htmlComments}"/>
