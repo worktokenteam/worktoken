@@ -156,7 +156,6 @@ public class HelpDesk {
          */
         em.clear();
         Assert.assertTrue(subject.equals(userTask.getSubject()));
-        Assert.assertTrue(userTask.getTaskState() == TaskState.Created);
 
         System.out.println("Posting answer and completing the Prepare Answer task");
         userTask.setAnswer("It's alright, Ma");

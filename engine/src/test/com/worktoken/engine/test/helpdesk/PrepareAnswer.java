@@ -19,7 +19,6 @@ package com.worktoken.engine.test.helpdesk;
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.annotation.RefType;
 import com.worktoken.model.Connector;
-import com.worktoken.model.HumanTask;
 import com.worktoken.model.UserTask;
 import com.worktoken.model.WorkToken;
 
@@ -30,7 +29,7 @@ import javax.persistence.Entity;
  */
 @FlowElement(nodeRef = "Prepare answer", refType = RefType.Name, processId = "process-com_worktoken_helpdesk")
 @Entity
-public class PrepareAnswer extends HumanTask {
+public class PrepareAnswer extends UserTask {
 
     private String answer;
     private static final String viewId = "/helpdesk/prepare-answer.xhtml";
@@ -65,7 +64,7 @@ public class PrepareAnswer extends HumanTask {
     public void complete() {
         WorkToken token = new WorkToken();
         token.getData().put("answer", answer);
-        sendResult(token);
+        tokenOut(token);
     }
 
     public HelpDeskProcess getHelpdeskProcess() {

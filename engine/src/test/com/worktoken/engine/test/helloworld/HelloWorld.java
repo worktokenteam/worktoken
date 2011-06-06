@@ -19,7 +19,6 @@ package com.worktoken.engine.test.helloworld;
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.WorkSessionImpl;
 import com.worktoken.model.BusinessProcess;
-import com.worktoken.model.TaskState;
 import com.worktoken.model.UserTask;
 import org.junit.After;
 import org.junit.Assert;
@@ -112,7 +111,6 @@ public class HelloWorld {
         Assert.assertTrue(userTasks.size() == 1);
         Assert.assertTrue(userTasks.get(0) instanceof SayHello);
         SayHello sayHello = (SayHello) userTasks.get(0);
-        Assert.assertTrue(sayHello.getTaskState() == TaskState.Created);
         /*
         Complete user task
          */
