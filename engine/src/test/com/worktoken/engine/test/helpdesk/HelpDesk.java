@@ -147,7 +147,7 @@ public class HelpDesk {
         Assert.assertTrue(userTasks.size() == 1);
         Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
         PrepareAnswer userTask = (PrepareAnswer) userTasks.get(0);
-        Assert.assertTrue("Prepare answer".equals(userTask.getDescription()));
+        Assert.assertTrue("Prepare answer".equals(userTask.getDocumentation()));
         String lineDefId = userTask.getLaneDefId();
         Assert.assertTrue(lineDefId != null);
         Assert.assertTrue(lineDefId.equals("com_worktoken_helpdesk_1"));

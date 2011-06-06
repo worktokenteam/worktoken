@@ -698,15 +698,18 @@ public class WorkSessionImpl implements WorkSession, Runnable {
     // ====================================================================================================== createNode
 
     private Node createNode(TFlowNode tNode, BusinessProcess process) {
+        TLane lane = BPMNUtils.findLaneForNode(tNode, process.getDefinition());
         if (tNode instanceof TCatchEvent) {
             CatchEventNode node = createCatchEventNode((TCatchEvent) tNode, process, null);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             persist(node);
             return node;
         }
         if (tNode instanceof TUserTask) {
             UserTask node = instantiateNode(tNode, UserTask.class, process);
-            TLane lane = BPMNUtils.findLaneForNode(tNode, process.getDefinition());
             if (lane != null) {
                 node.setLaneDefId(lane.getId());
             }
@@ -716,18 +719,27 @@ public class WorkSessionImpl implements WorkSession, Runnable {
         }
         if (tNode instanceof TBusinessRuleTask) {
             BusinessRuleTask node = instantiateNode(tNode, BusinessRuleTask.class, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             persist(node);
             return node;
         }
         if (tNode instanceof TSendTask) {
             SendTask node = instantiateNode(tNode, SendTask.class, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             persist(node);
             return node;
         }
         if (tNode instanceof TEventBasedGateway) {
             EventBasedGateway node = createEventBasedGateway((TEventBasedGateway) tNode, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             persist(node);
             for (Node target : node.getTargets()) {
@@ -742,12 +754,18 @@ public class WorkSessionImpl implements WorkSession, Runnable {
         }
         if (tNode instanceof TExclusiveGateway) {
             ExclusiveGateway node = instantiateNode(tNode, ExclusiveGateway.class, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             // do not persist
             return node;
         }
         if (tNode instanceof TThrowEvent) {
             ThrowEventNode node = createThrowEventNode((TThrowEvent) tNode, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
             node.setSession(this);
             // do not persist
             return node;

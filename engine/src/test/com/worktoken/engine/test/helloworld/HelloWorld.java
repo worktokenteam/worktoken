@@ -111,6 +111,7 @@ public class HelloWorld {
         Assert.assertTrue(userTasks.size() == 1);
         Assert.assertTrue(userTasks.get(0) instanceof SayHello);
         SayHello sayHello = (SayHello) userTasks.get(0);
+        Assert.assertTrue(sayHello.getDocumentation().equals("Say \"Hello, World!\""));
         /*
         Complete user task
          */

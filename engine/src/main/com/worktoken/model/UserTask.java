@@ -36,7 +36,6 @@ import java.util.List;
                     query = "SELECT n FROM UserTask n WHERE n.defId = :defId AND n.process = :process")
 })
 public class UserTask  extends Node {
-    private String laneDefId;
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
@@ -50,25 +49,20 @@ public class UserTask  extends Node {
         return "Task #" + getId();
     }
 
-    public String getDescription() {
-        return getDescription("text/plain");
+    @Override
+    public String getDocumentation() {
+        return getDocumentation("text/plain");
     }
 
-    public String getDescription(String textFormat) {
-        List<TDocumentation> documentation = getDocumentation();
-        for (TDocumentation doc : documentation) {
-            if (doc.getTextFormat().equalsIgnoreCase(textFormat)) {
-                return doc.getContent().get(0).toString();
-            }
-        }
-        return "User task";
-    }
-
-    public String getLaneDefId() {
-        return laneDefId;
-    }
-
-    public void setLaneDefId(String laneDefId) {
-        this.laneDefId = laneDefId;
+    /**
+     * Retrieve documentation from BPMN specification.
+     *
+     * @param textFormat - text format: "text/plain", "text/html" etc
+     * @return Documentation in specified format
+     */
+    @Override
+    public String getDocumentation(String textFormat) {
+        String documentation = super.getDocumentation(textFormat);
+        return documentation == null ? "User task" : documentation;
     }
 }

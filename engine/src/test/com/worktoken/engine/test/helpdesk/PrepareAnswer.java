@@ -44,7 +44,7 @@ public class PrepareAnswer extends UserTask {
     }
 
     @Override
-    public String getDescription() {
+    public String getDocumentation() {
         return "Prepare answer";
     }
 

@@ -111,6 +111,8 @@ public class BPMNUtils {
         return nodeList;
     }
 
+    // ============================================================================ findLaneForNode(TFlowNode, TLaneSet)
+
     private static TLane findLaneForNode(TFlowNode tNode, TLaneSet tLaneSet) {
         for (TLane tLane : tLaneSet.getLane()) {
             if (tLane.getChildLaneSet() != null) {
@@ -128,6 +130,8 @@ public class BPMNUtils {
         }
         return null;
     }
+
+    // ============================================================================ findLaneForNode(TFLowNode, TProcess)
 
     public static TLane findLaneForNode(TFlowNode tNode, TProcess tProcess) {
         for (TLaneSet laneSet : tProcess.getLaneSet()) {

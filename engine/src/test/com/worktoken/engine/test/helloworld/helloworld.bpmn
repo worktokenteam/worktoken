@@ -10,6 +10,7 @@
             <outgoing>start2sayHello</outgoing>
         </startEvent>
         <userTask id="sayHello" name="Say Hello">
+            <documentation>Say "Hello, World!"</documentation>
             <incoming>start2sayHello</incoming>
             <outgoing>sayHello2end</outgoing>
         </userTask>

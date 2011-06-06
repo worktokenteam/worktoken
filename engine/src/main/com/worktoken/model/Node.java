@@ -51,6 +51,8 @@ public abstract class Node {
     private BusinessProcess process;
     @Transient
     private WorkSession session;
+    private String laneDefId;
+
 
     public long getId() {
         return id;
@@ -109,11 +111,42 @@ public abstract class Node {
         return BPMNUtils.getFlowNode(defId, getProcess().getDefinition());
     }
 
-    public List<TDocumentation> getDocumentation() {
+    public List<TDocumentation> getDocumentationList() {
         TFlowNode definition = getDefinition();
         if (definition == null) {
             throw new IllegalStateException("Failed to find definition for node \"" + defId + "\"");
         }
         return definition.getDocumentation();
+    }
+
+    public String getDocumentation(String textFormat) {
+        List<TDocumentation> documentation = getDocumentationList();
+        for (TDocumentation doc : documentation) {
+            if (doc.getTextFormat().equalsIgnoreCase(textFormat)) {
+                return doc.getContent().get(0).toString();
+            }
+        }
+        return null;
+    }
+
+    public String getDocumentation() {
+        return getDocumentation("text/plain");
+    }
+
+    /**
+     * Get lane id.
+     *
+     * Lanes are used to organize and categorize Activities within a Pool. The meaning of the Lanes is up to the modeler.
+     * BPMN does not specify the usage of Lanes. Lanes are often used for such things as internal roles (e.g., Manager,
+     * Associate), systems (e.g., an enterprise application), an internal department (e.g., shipping, finance), etc.
+     *
+     * @return lane id or null
+     */
+    public String getLaneDefId() {
+        return laneDefId;
+    }
+
+    public void setLaneDefId(String laneDefId) {
+        this.laneDefId = laneDefId;
     }
 }

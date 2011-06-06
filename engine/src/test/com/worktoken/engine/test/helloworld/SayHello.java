@@ -29,11 +29,6 @@ import javax.persistence.Entity;
 @Entity
 public class SayHello extends UserTask {
 
-    @Override
-    public String getDescription() {
-        return "Say Hello";
-    }
-
     public void complete() {
         System.out.println("Hello, World");
         tokenOut();
