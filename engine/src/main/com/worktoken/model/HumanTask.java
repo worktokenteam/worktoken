@@ -16,16 +16,18 @@
 
 package com.worktoken.model;
 
-import com.sun.jmx.snmp.tasks.Task;
+import javax.persistence.Entity;
 
 /**
  * Implementation of WS-HumanTask, v 1.1
  *
  * @author Alex Pavlov (alex@rushproject.com)
  */
+@Entity
 public class HumanTask extends UserTask {
     private TaskState taskState;
     private boolean suspended;
+    private String userId;
 
     public HumanTask() {
         taskState = TaskState.Created;
@@ -39,6 +41,15 @@ public class HumanTask extends UserTask {
         if (suspended) {
             throw new IllegalStateException("Call to " + methodName + "() while task (" + getSignature() + ") is suspended. Please call resume() first.");
         }
+    }
+
+    public void start(String userId) {
+        assertNotSuspended("start");
+        if (taskState != TaskState.Ready) {
+            throw new IllegalStateException("Call to start(userId) while task (" + getSignature() + ") is not in Ready state");
+        }
+        this.userId = userId;
+        taskState = TaskState.InProgress;
     }
 
     public void start() {
@@ -78,5 +89,7 @@ public class HumanTask extends UserTask {
         this.suspended = suspended;
     }
 
-
+    public String getUserId() {
+        return userId;
+    }
 }
