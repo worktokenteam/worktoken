@@ -39,7 +39,7 @@ import java.util.concurrent.*;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 
-public class WorkSessionImpl implements WorkSession, Runnable {
+public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     private String sessionId;
 
@@ -50,7 +50,7 @@ public class WorkSessionImpl implements WorkSession, Runnable {
 
     // runner thread stuff
     private ExecutorService executor;
-    Future<?> future;
+    Future<String> future;
     private volatile boolean cancelled;
     private LinkedBlockingQueue<WorkItem> workItems;
     private static long TriggerPollCycle = 60000L;
@@ -94,7 +94,7 @@ public class WorkSessionImpl implements WorkSession, Runnable {
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
         tokenOut = new ThreadLocal<Boolean>();
-        future = executor.submit((Runnable) this);
+        future = executor.submit(this);
     }
 
     // =========================================================================================================== getId
@@ -104,10 +104,10 @@ public class WorkSessionImpl implements WorkSession, Runnable {
         return sessionId;
     }
 
-    // ============================================================================================================= run
+    // ============================================================================================================ call
 
     @Override
-    public void run() {
+    public String call() {
         boolean interrupted = false;
         threadId = Thread.currentThread().getId();
         while (!cancelled) {
@@ -178,6 +178,7 @@ public class WorkSessionImpl implements WorkSession, Runnable {
         if (interrupted) {
             Thread.currentThread().interrupt();
         }
+        return null;
     }
 
     // ======================================================================================================= isRunning
@@ -443,10 +444,18 @@ public class WorkSessionImpl implements WorkSession, Runnable {
     public void close() {
         cancelled = true;
         try {
-            Thread.sleep(1000);
+            future.get(5000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
+            e.printStackTrace();
             Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Failed to close session, " + e);
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Failed to close session, " + e);
         } finally {
+            executor.shutdown();
             SessionRegistry.removeSession(getId());
         }
     }

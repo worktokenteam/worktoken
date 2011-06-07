@@ -18,33 +18,26 @@ import java.util.List;
  */
 public class HelloWorldApp {
 
-    private static Connection connection;
-    private static EntityManagerFactory emf;
-    private static WorkSessionImpl session;
+    public static void main(String[] args) throws SQLException, JAXBException, InterruptedException {
 
-    public static void main(String[] args) throws SQLException, JAXBException {
-        connection = DriverManager.getConnection("jdbc:hsqldb:mem:helloworld", "sa", "");
-        emf = Persistence.createEntityManagerFactory("helloWorldPU");
+        Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:helloworld", "sa", "");
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("helloWorldPU");
 
-        /*
-        Prepare and verify annotation library
-         */
+        // Prepare and verify annotation library
         List<Class> annotatedClasses = new ArrayList<Class>();
         annotatedClasses.add(SayHello.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 
-        /*
-        Create work session and load process definition
-         */
-        session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
+        // Create work session and load process definition
+        WorkSessionImpl session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
         TDefinitions tDefinitions = session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
 
 
         long processId = session.createProcess("helloWorld");
 
         // Allow the process to reach User Task node (Say Hello)
-        Thread.yield();
+        Thread.sleep(1000);
 
         // Fetch the task
         SayHello sayHello = (SayHello) session.getUserTasks().get(0);
@@ -53,7 +46,7 @@ public class HelloWorldApp {
         sayHello.complete();
 
         // Allow the process to finish
-        Thread.yield();
+        Thread.sleep(1000);
 
         // Clean up: close session, entity manager factory and shutdown database
         session.close();

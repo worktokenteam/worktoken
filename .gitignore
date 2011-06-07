@@ -8,3 +8,4 @@ example/seam2app/exploded-archives
 documentation/chunks/*.html
 *.vpp~2
 misc.xml
+uiDesigner.xml

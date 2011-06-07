@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/../../out/artifacts/worktoken/worktoken.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../engine/src/main" />
+    </SOURCES>
   </library>
 </component>
