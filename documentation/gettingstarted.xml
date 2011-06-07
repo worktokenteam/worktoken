@@ -24,6 +24,7 @@
             &lt;outgoing>start2sayHello&lt;/outgoing>
         &lt;/startEvent>
         &lt;userTask id="sayHello" name="Say Hello">
+            &lt;documentation>Say "Hello, World!"&lt;/documentation>
             &lt;incoming>start2sayHello&lt;/incoming>
             &lt;outgoing>sayHello2end&lt;/outgoing>
         &lt;/userTask>

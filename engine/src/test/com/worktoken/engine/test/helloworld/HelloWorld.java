@@ -100,7 +100,7 @@ public class HelloWorld {
         /*
         Wait a couple of seconds for the process to reach User Task node (Say Hello)
          */
-        System.out.println("\n========================== Waiting 2 seconds for the process to reach Say Hello node ================\n");
+        System.out.println("\n=============== Waiting 2 seconds for the process to reach Say Hello node ================\n");
         Thread.sleep(2000);
 
         /*
