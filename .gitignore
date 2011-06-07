@@ -7,3 +7,4 @@ example/seam2app/exploded-archives
 *.iws
 documentation/chunks/*.html
 *.vpp~2
+misc.xml
