@@ -20,7 +20,6 @@ import com.worktoken.model.*;
 import org.omg.spec.bpmn._20100524.model.TDefinitions;
 import org.omg.spec.bpmn._20100524.model.TProcess;
 
-import javax.xml.bind.JAXBException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,7 @@ public interface WorkSession {
      * @return definitions id
      * @throws javax.xml.bind.JAXBException
      */
-    public TDefinitions readDefinitions(InputStream stream) throws JAXBException;
+    public TDefinitions readDefinitions(InputStream stream);
 
     public TDefinitions getDefinitions(String defId);
 

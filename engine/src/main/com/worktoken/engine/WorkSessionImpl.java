@@ -551,17 +551,24 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
      * @return initialized TDefinitions data structure
      */
     @Override
-    public TDefinitions readDefinitions(InputStream stream) throws JAXBException {
+    public TDefinitions readDefinitions(InputStream stream) {
         String packageName1 = TDefinitions.class.getPackage().getName();
         String packageName2 = BPMNDiagram.class.getPackage().getName();
         String packageName3 = Bounds.class.getPackage().getName();
         String packageName4 = Diagram.class.getPackage().getName();
-        JAXBContext jc = JAXBContext.newInstance(packageName1 + ":" + packageName2 + ":" + packageName3 + ":" + packageName4);
-        Unmarshaller u = jc.createUnmarshaller();
-        u.setEventHandler(new javax.xml.bind.helpers.DefaultValidationEventHandler());
-        @SuppressWarnings("unchecked")
-        JAXBElement<TDefinitions> doc = (JAXBElement<TDefinitions>) u.unmarshal(stream);
-        TDefinitions tDefinitions = doc.getValue();
+        TDefinitions tDefinitions;
+        try {
+            JAXBContext jc = null;
+            jc = JAXBContext.newInstance(packageName1 + ":" + packageName2 + ":" + packageName3 + ":" + packageName4);
+            Unmarshaller u = jc.createUnmarshaller();
+            u.setEventHandler(new javax.xml.bind.helpers.DefaultValidationEventHandler());
+            @SuppressWarnings("unchecked")
+            JAXBElement<TDefinitions> doc = (JAXBElement<TDefinitions>) u.unmarshal(stream);
+            tDefinitions = doc.getValue();
+        } catch (JAXBException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Error parsing definitions, " + e);
+        }
         String id = tDefinitions.getId();
         if (id == null || id.isEmpty()) {
             if (getDefinitionsMap().isEmpty()) {
