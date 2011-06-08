@@ -7,19 +7,22 @@ import org.omg.spec.bpmn._20100524.model.TDefinitions;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.LogManager;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 public class HelloWorldApp {
 
-    public static void main(String[] args) throws SQLException, JAXBException, InterruptedException {
+    public static void main(String[] args) throws SQLException, InterruptedException, IOException {
 
+        LogManager.getLogManager().readConfiguration(LogManager.class.getResourceAsStream("/logging.properties"));
         Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:helloworld", "sa", "");
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("helloWorldPU");
 
@@ -31,10 +34,10 @@ public class HelloWorldApp {
 
         // Create work session and load process definition
         WorkSessionImpl session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
-        TDefinitions tDefinitions = session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
+        session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
 
 
-        long processId = session.createProcess("helloWorld");
+        session.createProcess("helloWorld");
 
         // Allow the process to reach User Task node (Say Hello)
         Thread.sleep(1000);
