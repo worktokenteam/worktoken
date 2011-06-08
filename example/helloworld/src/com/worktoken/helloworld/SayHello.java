@@ -17,7 +17,6 @@
 package com.worktoken.helloworld;
 
 import com.worktoken.annotation.FlowElement;
-import com.worktoken.annotation.RefType;
 import com.worktoken.model.UserTask;
 
 import javax.persistence.Entity;
@@ -25,7 +24,7 @@ import javax.persistence.Entity;
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
-@FlowElement(nodeRef = "Say Hello", refType = RefType.Name, processId = "helloWorld")
+@FlowElement(nodeRef = "sayHello", processId = "helloWorld")
 @Entity
 public class SayHello extends UserTask {
 

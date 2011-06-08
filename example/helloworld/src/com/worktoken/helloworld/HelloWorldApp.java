@@ -2,11 +2,9 @@ package com.worktoken.helloworld;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.WorkSessionImpl;
-import org.omg.spec.bpmn._20100524.model.TDefinitions;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -36,7 +34,7 @@ public class HelloWorldApp {
         WorkSessionImpl session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
         session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
 
-
+        // Create process
         session.createProcess("helloWorld");
 
         // Allow the process to reach User Task node (Say Hello)
