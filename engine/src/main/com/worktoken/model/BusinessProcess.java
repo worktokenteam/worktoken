@@ -30,28 +30,22 @@ import javax.persistence.*;
 public class BusinessProcess {
     @Id
     @GeneratedValue(strategy = GenerationType.TABLE)
-    private long instanceId;
+    private long id;
     @Version
     private long version;
-    private String definitionId;
+    private String defId;
     private String sessionId;
-//    @OneToMany(mappedBy = "process", fetch = FetchType.LAZY)
-//    private Set<Node> nodes;
 
-    public long getInstanceId() {
-        return instanceId;
+    public long getId() {
+        return id;
     }
 
-    public void setInstanceId(long instanceId) {
-        this.instanceId = instanceId;
+    public String getDefId() {
+        return defId;
     }
 
-    public String getDefinitionId() {
-        return definitionId;
-    }
-
-    public void setDefinitionId(String definitionId) {
-        this.definitionId = definitionId;
+    public void setDefId(String definitionId) {
+        this.defId = definitionId;
     }
 
 //    public Set<Node> getNodes() {
@@ -62,7 +56,7 @@ public class BusinessProcess {
 //    }
 
     public void sendEventToken(EventToken eventToken) {
-        getSession().sendEventToken(eventToken, getInstanceId());
+        getSession().sendEventToken(eventToken, getId());
     }
 
     public void setSessionId(String sessionId) {
@@ -74,7 +68,7 @@ public class BusinessProcess {
     }
 
     public TProcess getDefinition() {
-        return getSession().getProcessDefinition(definitionId);
+        return getSession().getProcessDefinition(defId);
     }
 
     public WorkSession getSession() {

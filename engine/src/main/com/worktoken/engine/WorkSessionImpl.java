@@ -204,8 +204,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
                     trigger.disarm();
                     EventIn eventIn = new EventIn();
                     BusinessProcess process = trigger.getEventNode().getProcess();
-                    eventIn.setProcessInstanceId(process.getInstanceId());
-                    eventIn.setProcessDefinitionId(process.getDefinitionId());
+                    eventIn.setProcessInstanceId(process.getId());
+                    eventIn.setProcessDefinitionId(process.getDefId());
                     EventToken token = new EventToken();
                     token.setTriggerInstanceId(trigger.getInstanceId());
                     eventIn.setEventToken(token);
@@ -312,8 +312,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         TokenFromNode tokenFromNode = new TokenFromNode();
         tokenFromNode.setToken(token);
         BusinessProcess process = fromNode.getProcess();
-        tokenFromNode.setProcessInstanceId(process.getInstanceId());
-        tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
+        tokenFromNode.setProcessInstanceId(process.getId());
+        tokenFromNode.setProcessDefinitionId(process.getDefId());
         tokenFromNode.setNodeId(fromNode.getDefId());
         tokenFromNode.setConnector(connector);
         workItems.add(tokenFromNode);
@@ -346,8 +346,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         acquireEntityManager();
         TFlowNode tSource = BPMNUtils.getFlowNode(tokenFromNode.getNodeId(), getProcessDefinition(tokenFromNode.getProcessDefinitionId()));
         BusinessProcess process = em.get().find(BusinessProcess.class, tokenFromNode.getProcessInstanceId());
-        t4n.setProcessInstanceId(process.getInstanceId());
-        t4n.setProcessDefinitionId(process.getDefinitionId());
+        t4n.setProcessInstanceId(process.getId());
+        t4n.setProcessDefinitionId(process.getDefId());
         Node source = findNode(tSource, process);
         if (source != null) {
             if (source instanceof CatchEventNode) {
@@ -390,7 +390,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         if (em.get().contains(eventNode)) {
             em.get().remove(eventNode);
         }
-        TEventBasedGateway tGateway = BPMNUtils.find(gateway.getDefId(), getProcessDefinition(gateway.getProcess().getDefinitionId()), TEventBasedGateway.class);
+        TEventBasedGateway tGateway = BPMNUtils.find(gateway.getDefId(), getProcessDefinition(gateway.getProcess().getDefId()), TEventBasedGateway.class);
         if (tGateway.getEventGatewayType() == TEventBasedGatewayType.EXCLUSIVE) {
             /*
             if exclusive gateway, delete all other target nodes
@@ -432,8 +432,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         TokenFromNode tokenFromNode = new TokenFromNode();
         tokenFromNode.setToken(token);
         BusinessProcess process = fromNode.getProcess();
-        tokenFromNode.setProcessInstanceId(process.getInstanceId());
-        tokenFromNode.setProcessDefinitionId(process.getDefinitionId());
+        tokenFromNode.setProcessInstanceId(process.getId());
+        tokenFromNode.setProcessDefinitionId(process.getDefId());
         tokenFromNode.setNodeId(fromNode.getDefId());
         workItems.add(tokenFromNode);
     }
@@ -651,7 +651,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             process = (BusinessProcess) entity;
         }
         acquireEntityManager();
-        process.setDefinitionId(id);
+        process.setDefId(id);
         process.setSessionId(getId());
         persist(process);
         final List<TActivity> startActivities = new ArrayList<TActivity>();
@@ -708,7 +708,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             em.get().flush();   // we need to flush here to ensure the process instance id is not empty
         }
         releaseEntityManager();
-        return process.getInstanceId();
+        return process.getId();
     }
 
     // ====================================================================================================== createNode
@@ -786,7 +786,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             // do not persist
             return node;
         }
-        throw new IllegalArgumentException("Unknown or unsupported node type: process=\"" + process.getDefinitionId() +
+        throw new IllegalArgumentException("Unknown or unsupported node type: process=\"" + process.getDefId() +
                 "\", node(id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\")");
     }
 
@@ -794,7 +794,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     private <T extends Node> T instantiateNode(TFlowNode tNode, Class<T> nClass, BusinessProcess process) {
         Node node;
-        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefinitionId());
+        AnnotatedClass ac = dictionary.findNode(tNode.getId(), tNode.getName(), process.getDefId());
         if (ac == null) {
             try {
                 node = nClass.newInstance();
@@ -879,7 +879,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         /*
          * Setup targets
          */
-        TProcess tProcess = getProcessDefinition(process.getDefinitionId());
+        TProcess tProcess = getProcessDefinition(process.getDefId());
         final boolean[] hasMessageEvents = {false};
         boolean hasReceiveTasks = false;
         EventValidator validator = new EventValidator() {
