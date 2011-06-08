@@ -29,6 +29,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface FlowElement {
     String nodeRef();
-    RefType refType();
+    RefType refType() default RefType.Id;
     String processId() default "";
 }
