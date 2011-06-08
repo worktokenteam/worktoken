@@ -53,77 +53,67 @@
         </section>
         <section>
             <title>Java code</title>
-            <programlisting language="java">public class HelloWorld {
+            <programlisting language="java">
+@FlowElement(nodeRef = "sayHello", processId = "helloWorld")
+@Entity
+public class SayHello extends UserTask {<co xml:id="helloWorld-Java-SayHello-co" linkends="co-helloWorld-Java-SayHello"/>
 
-    private Connection connection;
-    private EntityManagerFactory emf;
-    private PersistentWorkSession session;
+    public void complete() {
+        System.out.println("Hello, World");
+        tokenOut();
+    }
 
-    @Before
-    public void setUp() throws Exception {
+}
 
-        /*
-        Start database and create entity manager factory
-         */
-        connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
-        emf = Persistence.createEntityManagerFactory("testPU");
+public class HelloWorldApp {
 
-        /*
-        Create annotation library
-         */
+    public static void main(String[] args) throws SQLException, InterruptedException, IOException {
+
+        LogManager.getLogManager().readConfiguration(LogManager.class.getResourceAsStream("/logging.properties"));
+        Connection connection = DriverManager.getConnection("jdbc:hsqldb:mem:helloworld", "sa", "");
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("helloWorldPU");
+
+        // Prepare and verify annotation library
         List&lt;Class> annotatedClasses = new ArrayList&lt;Class>();
         annotatedClasses.add(SayHello.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 
-        /*
-        Create work session and load process definition
-         */
-        session = new PersistentWorkSession("com.worktoken.helloworld", emf, dictionary);
-    }
+        // Create work session and load process definition
+        WorkSessionImpl session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
+        session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
 
-    @After
-    public void tearDown() throws Exception {
+        // Create process
+        session.createProcess("helloWorld");
+
+        // Allow the process to reach User Task node (Say Hello)
+        Thread.sleep(1000);
+
+        // Fetch the task
+        SayHello sayHello = (SayHello) session.getUserTasks().get(0);
+
+        // Complete user task
+        sayHello.complete();
+
+        // Allow the process to finish
+        Thread.sleep(1000);
+
+        // Clean up: close session, entity manager factory and shutdown database
         session.close();
         if (emf != null) {
             emf.close();
         }
         connection.createStatement().execute("SHUTDOWN");
     }
-
-    @Test
-    public void testHelloWorld() throws Exception {
-
-        long processId = session.createProcess("helloWorld");
-        Assert.assertTrue(processId > 0);
-
-
-        /*
-        Wait a couple of seconds for the process to reach User Task node (Say Hello)
-         */
-        Thread.sleep(2000);
-
-        List&lt;UserTask> userTasks = session.getUserTasks();
-        Assert.assertTrue(userTasks.size() == 1);
-        Assert.assertTrue(userTasks.get(0) instanceof SayHello);
-        SayHello sayHello = (SayHello) userTasks.get(0);
-        Assert.assertTrue(sayHello.getTaskState() == TaskState.Created);
-        /*
-        Complete user task
-         */
-        sayHello.complete();
-
-        /*
-        Wait a couple of seconds for the process to end
-         */
-        Thread.sleep(2000);
-
-
-        em = emf.createEntityManager();
-        Assert.assertNull(em.find(BusinessProcess.class, processId));
-        em.close();
-    }
-}                            </programlisting>
+}
+            </programlisting>
+            <calloutlist>
+                <callout arearefs="helloWorld-Java-SayHello-co" xml:id="co-helloWorld-Java-SayHello">
+                    <para>Work Token provides default implementation of BPMN user task activity -
+                        the UserTask class. The class provides several convenience methods and
+                        serves as a base class for process specific user task objects. </para>
+                </callout>
+            </calloutlist>
         </section>
     </section>
 </chapter>

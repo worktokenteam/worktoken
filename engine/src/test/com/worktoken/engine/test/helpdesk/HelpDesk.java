@@ -143,7 +143,7 @@ public class HelpDesk {
          */
         Assert.assertTrue(session.isRunning());
         System.out.println("Verifying Prepare Answer node");
-        List<UserTask> userTasks = em.createQuery("SELECT task FROM UserTask task WHERE task.process.instanceId = :id").setParameter("id", processId).getResultList();
+        List<UserTask> userTasks = em.createQuery("SELECT task FROM UserTask task WHERE task.process.id = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(userTasks.size() == 1);
         Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
         PrepareAnswer userTask = (PrepareAnswer) userTasks.get(0);
@@ -166,12 +166,12 @@ public class HelpDesk {
 
         System.out.println("Verifying gateway triggers");
         Assert.assertTrue(session.isRunning());
-        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
+        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.id = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
         em.clear();
 
         System.out.println("Adjusting timer alarm time to ensure it is ready to be fired");
-        TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getSingleResult();
+        TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.id = :id").setParameter("id", processId).getSingleResult();
         timer.setNextAlarm(new Date());
         em.merge(timer);
         em.flush();
@@ -236,7 +236,7 @@ public class HelpDesk {
         System.out.println("\n====================== Verifying gateway triggers =========================\n");
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
-        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.instanceId = :id").setParameter("id", processId).getResultList();
+        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.id = :id").setParameter("id", processId).getResultList();
         Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
         em.close();
 

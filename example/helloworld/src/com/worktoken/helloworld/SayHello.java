@@ -17,7 +17,9 @@
 package com.worktoken.helloworld;
 
 import com.worktoken.annotation.FlowElement;
+import com.worktoken.model.Connector;
 import com.worktoken.model.UserTask;
+import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
 
@@ -27,6 +29,14 @@ import javax.persistence.Entity;
 @FlowElement(nodeRef = "sayHello", processId = "helloWorld")
 @Entity
 public class SayHello extends UserTask {
+
+    @Override
+    public void tokenIn(WorkToken token, Connector connector) {
+        System.out.println("User task with id " + getDefId() + " is ready. Instance id is " + getId());
+        System.out.println("Process info: name = " + getProcess().getDefinition().getName() +
+                           ", id = " + getProcess().getDefId() +
+                           ", instance id = " + getProcess().getId());
+    }
 
     public void complete() {
         System.out.println("Hello, World");
