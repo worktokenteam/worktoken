@@ -32,10 +32,8 @@ public class SayHello extends UserTask {
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
-        System.out.println("User task with id " + getDefId() + " is ready. Instance id is " + getId());
-        System.out.println("Process info: name = " + getProcess().getDefinition().getName() +
-                           ", id = " + getProcess().getDefId() +
-                           ", instance id = " + getProcess().getId());
+        System.out.println("User task \"" + getSubject() + "\" (" + getId() +
+                           ") is ready. Description: " + getDocumentation());
     }
 
     public void complete() {

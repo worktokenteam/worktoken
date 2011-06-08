@@ -58,6 +58,12 @@
 @Entity
 public class SayHello extends UserTask {<co xml:id="helloWorld-Java-SayHello-co" linkends="co-helloWorld-Java-SayHello"/>
 
+    @Override
+    public void tokenIn(WorkToken token, Connector connector) {
+        System.out.println("User task \"" + getSubject() + "\" (" + getId() +
+                           ") is ready. Description: " + getDocumentation());
+    }
+
     public void complete() {
         System.out.println("Hello, World");
         tokenOut();
@@ -107,11 +113,28 @@ public class HelloWorldApp {
     }
 }
             </programlisting>
+            <para>Work Token provides default implementation of BPMN user task activity -
+                the UserTask class. The class provides several convenience methods and
+                serves as a base class for process specific user task objects. SayHello
+                extends the UserTask 
+                and since it is annotated as FlowElement, it will be
+                automatically instantiated every time process with id "helloWorld" reaches
+                the node with id "sayHello". </para>
+            <para>Please note that both UserTask and SayHello classes are JPA entities, this
+                ensures that SayHello object instance will be persisted in a
+                database.</para>
+            
             <calloutlist>
                 <callout arearefs="helloWorld-Java-SayHello-co" xml:id="co-helloWorld-Java-SayHello">
                     <para>Work Token provides default implementation of BPMN user task activity -
                         the UserTask class. The class provides several convenience methods and
-                        serves as a base class for process specific user task objects. </para>
+                        serves as a base class for process specific user task objects. SayHello
+                        extends the UserTask and since it is annotated as FlowElement, it will be
+                        automatically instantiated every time process with id "helloWorld" reaches
+                        the node with id "sayHello". </para>
+                    <para>Please note that both UserTask and SayHello classes are JPA entities, this
+                        ensures that SayHello object instance will be persisted in a
+                        database.</para>
                 </callout>
             </calloutlist>
         </section>
