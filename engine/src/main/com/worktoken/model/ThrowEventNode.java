@@ -29,6 +29,7 @@ import java.util.Set;
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
+// TODO: we never persist the ThrowEventNode, should we keep the named queries?
 @NamedQueries({
         @NamedQuery(name = "ThrowEventNode.findByProcess",
                     query = "SELECT n FROM ThrowEventNode n WHERE n.process = :process"),

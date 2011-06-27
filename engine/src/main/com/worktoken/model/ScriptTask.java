@@ -14,31 +14,27 @@
  * limitations under the License.
  */
 
-package com.worktoken.tasklist;
-
-import com.worktoken.annotation.FlowElement;
-import com.worktoken.model.Connector;
-import com.worktoken.model.UserTask;
-import com.worktoken.model.WorkToken;
+package com.worktoken.model;
 
 import javax.persistence.Entity;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
-@FlowElement(nodeRef = "sayHello", processId = "helloWorld")
 @Entity
-public class SayHello extends UserTask {
+@NamedQueries({
+        @NamedQuery(name = "ScriptTask.findByProcess",
+                    query = "SELECT n FROM ScriptTask n WHERE n.process = :process"),
+        @NamedQuery(name = "ScriptTask.findByDefIdAndProcess",
+                    query = "SELECT n FROM ScriptTask n WHERE n.defId = :defId AND n.process = :process")
+})
+public class ScriptTask extends Node {
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
-        System.out.println("User task \"" + getSubject() + "\" (" + getId() +
-                           ") is ready. Description: " + getDocumentation());
-    }
-
-    public void complete() {
-        System.out.println("Hello, World");
-        tokenOut();
+        tokenOut(token);
     }
 
 }

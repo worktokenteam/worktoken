@@ -238,6 +238,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             query = "ExclusiveGateway";
         } else if (nodeDef instanceof TEventBasedGateway) {
             query = "EventBasedGateway";
+        } else if (nodeDef instanceof TScriptTask) {
+            query = "ScriptTask";
         } else {
             throw new IllegalStateException("Unsupported node type: " + nodeDef.getClass().getName());
         }
@@ -348,6 +350,11 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         BusinessProcess process = em.get().find(BusinessProcess.class, tokenFromNode.getProcessInstanceId());
         t4n.setProcessInstanceId(process.getId());
         t4n.setProcessDefinitionId(process.getDefId());
+        /*
+        Now we need to remove the token source node from database. We use findNode, which fetches persisted nodes only.
+        Note that there is no need to delete non-persistent nodes, as all nodes are automatically deleted after
+        calling tokenIn (see call() method)
+         */
         Node source = findNode(tSource, process);
         if (source != null) {
             if (source instanceof CatchEventNode) {
@@ -749,6 +756,15 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             }
             node.setSession(this);
             persist(node);
+            return node;
+        }
+        if (tNode instanceof TScriptTask) {
+            ScriptTask node = instantiateNode(tNode, ScriptTask.class, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
+            node.setSession(this);
+            // do not persist
             return node;
         }
         if (tNode instanceof TEventBasedGateway) {

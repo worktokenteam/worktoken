@@ -9,3 +9,4 @@ documentation/chunks/*.html
 *.vpp~2
 misc.xml
 uiDesigner.xml
+*.vpp~1

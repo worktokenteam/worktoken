@@ -2,6 +2,7 @@ package com.worktoken.tasklist;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
 import com.worktoken.engine.WorkSessionImpl;
+import com.worktoken.model.EventToken;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
@@ -26,7 +27,7 @@ public class TaskListApp {
 
         // Prepare and verify annotation library
         List<Class> annotatedClasses = new ArrayList<Class>();
-        annotatedClasses.add(SayHello.class);
+        annotatedClasses.add(completeTask.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 
@@ -35,16 +36,22 @@ public class TaskListApp {
         session.readDefinitions(TaskListApp.class.getResourceAsStream("tasklist.bpmn"));
 
         // Create process
-        session.createProcess("taskList");
+        long processId = session.createProcess("taskList");
+
+        // Send message
+        EventToken message = new EventToken();
+        message.setDefinitionId("newTaskMessage");
+        session.sendEventToken(message, processId);
+
 
         // Allow the process to reach User Task node (Say Hello)
         Thread.sleep(1000);
 
         // Fetch the task
-        SayHello sayHello = (SayHello) session.getUserTasks().get(0);
+        completeTask completeTask = (completeTask) session.getUserTasks().get(0);
 
         // Complete user task
-        sayHello.complete();
+        completeTask.complete();
 
         // Allow the process to finish
         Thread.sleep(1000);

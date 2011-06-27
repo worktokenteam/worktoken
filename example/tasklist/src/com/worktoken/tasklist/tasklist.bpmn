@@ -14,7 +14,6 @@
 
         <userTask id="completeTask" name="Complete task">
             <incoming>_2_5</incoming>
-            <outgoing>_2_7</outgoing>
             <outgoing>_2_9</outgoing>
         </userTask>
 
