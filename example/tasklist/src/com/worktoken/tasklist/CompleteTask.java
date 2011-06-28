@@ -17,8 +17,8 @@
 package com.worktoken.tasklist;
 
 import com.worktoken.annotation.FlowElement;
-import com.worktoken.model.CatchEventNode;
-import com.worktoken.model.EventToken;
+import com.worktoken.model.Connector;
+import com.worktoken.model.UserTask;
 import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
@@ -26,13 +26,26 @@ import javax.persistence.Entity;
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
+@FlowElement(nodeRef = "completeTask", processId = "taskList")
 @Entity
-@FlowElement(nodeRef = "start", processId = "taskList")
-public class Start extends CatchEventNode {
+public class CompleteTask extends UserTask {
+
+    private String subject;
+
     @Override
-    public void eventIn(EventToken event) {
+    public void tokenIn(WorkToken token, Connector connector) {
+        subject = token.getData().get("subject").toString();
+    }
+
+    @Override
+    public String getSubject() {
+        return subject;
+    }
+
+    public void complete(String notes) {
         WorkToken token = new WorkToken();
-        token.getData().put("subject", event.getData().get("subject"));
+        token.getData().put("subject", subject);
+        token.getData().put("notes", notes);
         tokenOut(token);
     }
 }

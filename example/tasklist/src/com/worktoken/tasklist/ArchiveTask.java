@@ -17,22 +17,22 @@
 package com.worktoken.tasklist;
 
 import com.worktoken.annotation.FlowElement;
-import com.worktoken.model.CatchEventNode;
-import com.worktoken.model.EventToken;
+import com.worktoken.model.Connector;
+import com.worktoken.model.ScriptTask;
 import com.worktoken.model.WorkToken;
-
-import javax.persistence.Entity;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
-@Entity
-@FlowElement(nodeRef = "start", processId = "taskList")
-public class Start extends CatchEventNode {
+@FlowElement(nodeRef = "archiveTask", processId = "taskList")
+public class ArchiveTask extends ScriptTask {
+
     @Override
-    public void eventIn(EventToken event) {
-        WorkToken token = new WorkToken();
-        token.getData().put("subject", event.getData().get("subject"));
-        tokenOut(token);
+    public void tokenIn(WorkToken token, Connector connector) {
+        TaskRecord taskRecord = new TaskRecord();
+        taskRecord.setSubject(token.getData().get("subject").toString());
+        taskRecord.setNotes(token.getData().get("notes").toString());
+        getSession().persist(taskRecord);
+        tokenOut();
     }
 }

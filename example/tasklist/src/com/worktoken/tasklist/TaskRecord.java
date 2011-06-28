@@ -16,23 +16,35 @@
 
 package com.worktoken.tasklist;
 
-import com.worktoken.annotation.FlowElement;
-import com.worktoken.model.CatchEventNode;
-import com.worktoken.model.EventToken;
-import com.worktoken.model.WorkToken;
-
-import javax.persistence.Entity;
+import javax.persistence.*;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
+
 @Entity
-@FlowElement(nodeRef = "start", processId = "taskList")
-public class Start extends CatchEventNode {
-    @Override
-    public void eventIn(EventToken event) {
-        WorkToken token = new WorkToken();
-        token.getData().put("subject", event.getData().get("subject"));
-        tokenOut(token);
+public class TaskRecord {
+    @Id
+    @GeneratedValue(strategy = GenerationType.TABLE)
+    private long id;
+    @Version
+    private long version;
+    private String subject;
+    private String notes;
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 }
