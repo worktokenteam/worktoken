@@ -17,18 +17,16 @@
             <outgoing>_2_9</outgoing>
         </userTask>
 
-        <sequenceFlow id="_2_5" name="" sourceRef="start" targetRef="completeTask"/>
-
-        <endEvent id="end" name="End">
-            <incoming>_2_7</incoming>
-            <incoming>_2_10</incoming>
-        </endEvent>
-
         <scriptTask id="archiveTask" name="Archive task">
             <incoming>_2_9</incoming>
             <outgoing>_2_10</outgoing>
         </scriptTask>
 
+        <endEvent id="end" name="End">
+            <incoming>_2_10</incoming>
+        </endEvent>
+
+        <sequenceFlow id="_2_5" name="" sourceRef="start" targetRef="completeTask"/>
         <sequenceFlow id="_2_9" name="" sourceRef="completeTask" targetRef="archiveTask" />
         <sequenceFlow id="_2_10" name="" sourceRef="archiveTask" targetRef="end" />
     </process>

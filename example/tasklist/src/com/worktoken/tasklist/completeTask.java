@@ -22,16 +22,25 @@ import com.worktoken.model.UserTask;
 import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
+import javax.security.auth.Subject;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @FlowElement(nodeRef = "completeTask", processId = "taskList")
 @Entity
-public class completeTask extends UserTask {
+public class CompleteTask extends UserTask {
+
+    private String subject;
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
+        subject = token.getData().get("subject").toString();
+    }
+
+    @Override
+    public String getSubject() {
+        return subject;
     }
 
     public void complete() {
