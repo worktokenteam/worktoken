@@ -39,6 +39,7 @@ public class TaskListApp {
         annotatedClasses.add(CompleteTask.class);
         annotatedClasses.add(Start.class);
         annotatedClasses.add(ArchiveTask.class);
+        annotatedClasses.add(TaskListProcess.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 
