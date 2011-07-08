@@ -24,6 +24,7 @@ import org.omg.spec.bpmn._20100524.model.TFlowNode;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
@@ -97,6 +98,10 @@ public abstract class Node {
 
     protected void tokenOut(WorkToken token, Connector connector) {
         getSession().sendToken(token, this, connector);
+    }
+
+    protected void tokensOut(Map<Connector, WorkToken> tokenMap) {
+        getSession().sendTokens(tokenMap, this);
     }
 
     public String getClassName() {

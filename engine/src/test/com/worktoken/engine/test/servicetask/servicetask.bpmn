@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions id="serviceTask" targetNamespace="http://www.omg.org/bpmn20"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.omg.org/spec/BPMN/20100524/MODEL http://www.omg.org/spec/BPMN/2.0/20100501/BPMN20.xsd">
+
+	<process id="orderProcess" name="Service Task">
+
+        <startEvent id="_2_1" isInterrupting="true" name="Receive order">
+            <outgoing>_2_3</outgoing>
+			<messageEventDefinition id="ID_06301424_2410_6200_2400_000000600026" messageRef="newOrder"/>
+		</startEvent>
+
+		<parallelGateway gatewayDirection="Diverging" id="_2_2" name="">
+            <incoming>_2_3</incoming>
+			<outgoing>_2_7</outgoing>
+			<outgoing>_2_9</outgoing>
+		</parallelGateway>
+
+        <serviceTask completionQuantity="1" id="_2_6" implementation="##unspecified" isForCompensation="false" name="Check credit" startQuantity="1">
+            <incoming>_2_7</incoming>
+			<outgoing>_2_11</outgoing>
+		</serviceTask>
+
+		<serviceTask completionQuantity="1" id="_2_8" implementation="##unspecified" isForCompensation="false" name="Check stock" startQuantity="1">
+            <incoming>_2_9</incoming>
+			<outgoing>_2_17</outgoing>
+		</serviceTask>
+
+		<exclusiveGateway gatewayDirection="Unspecified" id="_2_10" name="Credit OK?">
+            <incoming>_2_11</incoming>
+			<outgoing>_2_15</outgoing>
+			<outgoing>_2_21</outgoing>
+		</exclusiveGateway>
+
+		<endEvent id="_2_14" name="Order cancelled">
+            <incoming>_2_15</incoming>
+			<incoming>_2_18</incoming>
+			<terminateEventDefinition id="ID_62701424_2410_6200_2400_000000600035"/>
+		</endEvent>
+
+		<exclusiveGateway gatewayDirection="Diverging" id="_2_16" name="Out of stock?">
+            <incoming>_2_17</incoming>
+			<outgoing>_2_18</outgoing>
+			<outgoing>_2_20</outgoing>
+		</exclusiveGateway>
+
+		<parallelGateway gatewayDirection="Converging" id="_2_19" name="">
+            <incoming>_2_20</incoming>
+			<incoming>_2_21</incoming>
+			<outgoing>_2_23</outgoing>
+		</parallelGateway>
+
+		<userTask id="_2_22" implementation="##unspecified" isForCompensation="false" name="Process order">
+            <incoming>_2_23</incoming>
+			<outgoing>_2_25</outgoing>
+		</userTask>
+
+		<endEvent id="_2_24" name="Order completed">
+            <incoming>_2_25</incoming>
+		</endEvent>
+
+        <sequenceFlow id="_2_3" name="" sourceRef="_2_1" targetRef="_2_2" />
+        <sequenceFlow id="_2_7" name="" sourceRef="_2_2" targetRef="_2_6"/>
+        <sequenceFlow id="_2_9" name="" sourceRef="_2_2" targetRef="_2_8"/>
+        <sequenceFlow id="_2_11" name="" sourceRef="_2_6" targetRef="_2_10" />
+        <sequenceFlow id="_2_15" name="No" sourceRef="_2_10" targetRef="_2_14" />
+        <sequenceFlow id="_2_17" name="" sourceRef="_2_8" targetRef="_2_16" />
+        <sequenceFlow id="_2_18" name="Yes" sourceRef="_2_16" targetRef="_2_14" />
+        <sequenceFlow id="_2_20" name="No" sourceRef="_2_16" targetRef="_2_19" />
+		<sequenceFlow id="_2_21" name="Yes" sourceRef="_2_10" targetRef="_2_19" />
+        <sequenceFlow id="_2_23" name="" sourceRef="_2_19" targetRef="_2_22" />
+		<sequenceFlow id="_2_25" name="" sourceRef="_2_22" targetRef="_2_24" />
+	</process>
+
+	<message id="newOrder" name="NewOrder"/>
+
+	<bpmndi:BPMNDiagram id="diagram-_1" name="Service Task">
+		<bpmndi:BPMNPlane bpmnElement="orderProcess" id="plane-_1">
+			<bpmndi:BPMNShape bpmnElement="_2_1" id="ID_62301424_2410_6200_2400_000000600001">
+				<omgdc:Bounds height="20" width="20" x="160" y="340"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape bpmnElement="_2_2" id="ID_62301424_2410_6200_2400_000000600002">
+				<omgdc:Bounds height="40" width="40" x="260" y="330"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_3" id="ID_62301424_2410_6200_2400_000000600003" sourceElement="ID_62301424_2410_6200_2400_000000600001" targetElement="ID_62301424_2410_6200_2400_000000600002">
+				<omgdi:waypoint x="180" y="350"/>
+				<omgdi:waypoint x="259" y="350"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_6" id="ID_62301424_2410_6200_2400_000000600004">
+				<omgdc:Bounds height="40" width="110" x="345" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_7" id="ID_62301424_2410_6200_2400_000000600005" sourceElement="ID_62301424_2410_6200_2400_000000600002" targetElement="ID_62301424_2410_6200_2400_000000600004">
+				<omgdi:waypoint x="280" y="330"/>
+				<omgdi:waypoint x="280" y="260"/>
+				<omgdi:waypoint x="344" y="260"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_8" id="ID_62301424_2410_6200_2400_000000600006">
+				<omgdc:Bounds height="40" width="110" x="345" y="405"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_9" id="ID_62301424_2410_6200_2400_000000600007" sourceElement="ID_62301424_2410_6200_2400_000000600002" targetElement="ID_62301424_2410_6200_2400_000000600006">
+				<omgdi:waypoint x="280" y="370"/>
+				<omgdi:waypoint x="280" y="425"/>
+				<omgdi:waypoint x="344" y="425"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_10" id="ID_62301424_2410_6200_2400_000000600010">
+				<omgdc:Bounds height="40" width="40" x="515" y="240"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_11" id="ID_62301424_2410_6200_2400_000000600011" sourceElement="ID_62301424_2410_6200_2400_000000600004" targetElement="ID_62301424_2410_6200_2400_000000600010">
+				<omgdi:waypoint x="455" y="260"/>
+				<omgdi:waypoint x="514" y="260"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_14" id="ID_12301424_2410_6200_2400_000000600012">
+				<omgdc:Bounds height="20" width="20" x="525" y="340"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_15" id="ID_12301424_2410_6200_2400_000000600013" sourceElement="ID_62301424_2410_6200_2400_000000600010" targetElement="ID_12301424_2410_6200_2400_000000600012">
+				<omgdi:waypoint x="535" y="280"/>
+				<omgdi:waypoint x="535" y="340"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_16" id="ID_12301424_2410_6200_2400_000000600014">
+				<omgdc:Bounds height="40" width="40" x="515" y="410"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_17" id="ID_12301424_2410_6200_2400_000000600015" sourceElement="ID_62301424_2410_6200_2400_000000600006" targetElement="ID_12301424_2410_6200_2400_000000600014">
+				<omgdi:waypoint x="455" y="430"/>
+				<omgdi:waypoint x="514" y="430"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="_2_18" id="ID_12301424_2410_6200_2400_000000600016" sourceElement="ID_12301424_2410_6200_2400_000000600014" targetElement="ID_12301424_2410_6200_2400_000000600012">
+				<omgdi:waypoint x="535" y="410"/>
+				<omgdi:waypoint x="535" y="359"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_19" id="ID_12301424_2410_6200_2400_000000600017">
+				<omgdc:Bounds height="40" width="40" x="660" y="330"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_20" id="ID_12301424_2410_6200_2400_000000600020" sourceElement="ID_12301424_2410_6200_2400_000000600014" targetElement="ID_12301424_2410_6200_2400_000000600017">
+				<omgdi:waypoint x="555" y="430"/>
+				<omgdi:waypoint x="680" y="430"/>
+				<omgdi:waypoint x="680" y="370"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge bpmnElement="_2_21" id="ID_12301424_2410_6200_2400_000000600021" sourceElement="ID_62301424_2410_6200_2400_000000600010" targetElement="ID_12301424_2410_6200_2400_000000600017">
+				<omgdi:waypoint x="555" y="260"/>
+				<omgdi:waypoint x="680" y="260"/>
+				<omgdi:waypoint x="680" y="330"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_22" id="ID_12301424_2410_6200_2400_000000600022">
+				<omgdc:Bounds height="40" width="105" x="770" y="330"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_23" id="ID_12301424_2410_6200_2400_000000600023" sourceElement="ID_12301424_2410_6200_2400_000000600017" targetElement="ID_12301424_2410_6200_2400_000000600022">
+				<omgdi:waypoint x="700" y="350"/>
+				<omgdi:waypoint x="769" y="350"/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNShape bpmnElement="_2_24" id="ID_12301424_2410_6200_2400_000000600024">
+				<omgdc:Bounds height="20" width="20" x="940" y="340"/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge bpmnElement="_2_25" id="ID_12301424_2410_6200_2400_000000600025" sourceElement="ID_12301424_2410_6200_2400_000000600022" targetElement="ID_12301424_2410_6200_2400_000000600024">
+				<omgdi:waypoint x="875" y="350"/>
+				<omgdi:waypoint x="940" y="350"/>
+			</bpmndi:BPMNEdge>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</definitions>

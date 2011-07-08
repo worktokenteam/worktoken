@@ -16,6 +16,7 @@
 
 package com.worktoken.engine;
 
+import com.worktoken.model.PathSocket;
 import com.worktoken.model.*;
 import org.omg.spec.bpmn._20100524.di.BPMNDiagram;
 import org.omg.spec.bpmn._20100524.model.*;
@@ -30,6 +31,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
 import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.*;
@@ -240,6 +242,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             query = "EventBasedGateway";
         } else if (nodeDef instanceof TScriptTask) {
             query = "ScriptTask";
+        } else if (nodeDef instanceof TParallelGateway) {
+            query = "ParallelGateway";
         } else {
             throw new IllegalStateException("Unsupported node type: " + nodeDef.getClass().getName());
         }
@@ -303,48 +307,30 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         return flowNode.getOutgoing().isEmpty();
     }
 
-    // =========================================================================== sendToken(token, fromNode, connector)
-
-    @Override
-    public void sendToken(WorkToken token, Node fromNode, Connector connector) {
-        tokenOut.set(true);
-        if (!isRunner()) {
-            fromNode = (Node) merge(fromNode);
-        }
-        TokenFromNode tokenFromNode = new TokenFromNode();
-        tokenFromNode.setToken(token);
-        BusinessProcess process = fromNode.getProcess();
-        tokenFromNode.setProcessInstanceId(process.getId());
-        tokenFromNode.setProcessDefinitionId(process.getDefId());
-        tokenFromNode.setNodeId(fromNode.getDefId());
-        tokenFromNode.setConnector(connector);
-        workItems.add(tokenFromNode);
-    }
-
     // ============================================================================================= handleTokenFromNode
 
     private void handleTokenFromNode(TokenFromNode tokenFromNode) {
         TFlowNode target;
-        if (tokenFromNode.getConnector() == null) {
-            List<TFlowNode> toNodeDefs = findNext(tokenFromNode.getNodeId(), tokenFromNode.getProcessDefinitionId());
-            if (toNodeDefs.size() == 0) {
-                throw new IllegalStateException("No paths from \"" + tokenFromNode.getNodeId() + "\"");
-            }
-            if (toNodeDefs.size() > 1) {
-                throw new IllegalStateException("Multiple paths from \"" + tokenFromNode.getNodeId() + "\", please specify Connector");
-            }
-            target = toNodeDefs.get(0);
-        } else {
-            Connector connector = tokenFromNode.getConnector();
-            if (!(connector.getDefinition().getTargetRef() instanceof TFlowNode)) {
-                throw new IllegalStateException("Target node " + connector.getDefinition().getTargetRef().toString() + " is not of TFlowNode type");
-            }
-            target = (TFlowNode) connector.getDefinition().getTargetRef();
+//        if (tokenFromNode.getConnector() == null) {
+//            List<TFlowNode> toNodeDefs = findNext(tokenFromNode.getNodeId(), tokenFromNode.getProcessDefinitionId());
+//            if (toNodeDefs.size() == 0) {
+//                throw new IllegalStateException("No paths from \"" + tokenFromNode.getNodeId() + "\"");
+//            }
+//            if (toNodeDefs.size() > 1) {
+//                throw new IllegalStateException("Multiple paths from \"" + tokenFromNode.getNodeId() + "\", please specify Connector");
+//            }
+//            target = toNodeDefs.get(0);
+//        } else {
+        Connector connector = tokenFromNode.getConnector();
+        if (!(connector.getDefinition().getTargetRef() instanceof TFlowNode)) {
+            throw new IllegalStateException("Target node " + connector.getDefinition().getTargetRef().toString() + " is not of TFlowNode type");
         }
+        target = (TFlowNode) connector.getDefinition().getTargetRef();
+//        }
         TokenForNode t4n = new TokenForNode();
         t4n.setToken(tokenFromNode.getToken());
         t4n.setNodeDef(target);
-        t4n.setConnector(createConnector(tokenFromNode.getNodeId(), target.getId()));
+        t4n.setConnector(connector);
         acquireEntityManager();
         TFlowNode tSource = BPMNUtils.getFlowNode(tokenFromNode.getNodeId(), getProcessDefinition(tokenFromNode.getProcessDefinitionId()));
         BusinessProcess process = em.get().find(BusinessProcess.class, tokenFromNode.getProcessInstanceId());
@@ -428,23 +414,6 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         }
     }
 
-    // ====================================================================================== sendToken(token, fromNode)
-
-    @Override
-    public void sendToken(WorkToken token, Node fromNode) {
-        tokenOut.set(true);
-        if (!isRunner()) {
-            fromNode = (Node) merge(fromNode);
-        }
-        TokenFromNode tokenFromNode = new TokenFromNode();
-        tokenFromNode.setToken(token);
-        BusinessProcess process = fromNode.getProcess();
-        tokenFromNode.setProcessInstanceId(process.getId());
-        tokenFromNode.setProcessDefinitionId(process.getDefId());
-        tokenFromNode.setNodeId(fromNode.getDefId());
-        workItems.add(tokenFromNode);
-    }
-
     // =========================================================================================================== close
 
     @Override
@@ -479,13 +448,6 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         releaseEntityManager();
     }
 
-    // ================================================================================================= createConnector
-
-    private Connector createConnector(String from, String to) {
-        // TODO: implement it! If we need it, though...
-        return null;
-    }
-
     // ======================================================================================================== findNext
 
     private List<TFlowNode> findNext(final String nodeId, final String processId) {
@@ -497,11 +459,75 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         return BPMNUtils.findNext(fromNodeDef, tProcess);
     }
 
+    // ====================================================================================================== sendTokens
+
     @Override
-    public void sendTokens(Map<Connector, WorkToken> tokens) {
+    public void sendTokens(Map<Connector, WorkToken> tokenMap, Node fromNode) {
         tokenOut.set(true);
-        // TODO: implement
-        throw new IllegalStateException("Not implemented");
+        if (!isRunner()) {
+            fromNode = (Node) merge(fromNode);
+        }
+        for (Map.Entry<Connector, WorkToken> entry : tokenMap.entrySet()) {
+            TokenFromNode tokenFromNode = new TokenFromNode();
+            tokenFromNode.setToken(entry.getValue());
+            BusinessProcess process = fromNode.getProcess();
+            tokenFromNode.setProcessInstanceId(process.getId());
+            tokenFromNode.setProcessDefinitionId(process.getDefId());
+            tokenFromNode.setNodeId(fromNode.getDefId());
+            tokenFromNode.setConnector(entry.getKey());
+            workItems.add(tokenFromNode);
+        }
+    }
+
+    // =========================================================================== sendToken(token, fromNode, connector)
+
+    @Override
+    public void sendToken(WorkToken token, Node fromNode, Connector connector) {
+        tokenOut.set(true);
+        if (!isRunner()) {
+            fromNode = (Node) merge(fromNode);
+        }
+        TokenFromNode tokenFromNode = new TokenFromNode();
+        tokenFromNode.setToken(token);
+        BusinessProcess process = fromNode.getProcess();
+        tokenFromNode.setProcessInstanceId(process.getId());
+        tokenFromNode.setProcessDefinitionId(process.getDefId());
+        tokenFromNode.setNodeId(fromNode.getDefId());
+        tokenFromNode.setConnector(connector);
+        workItems.add(tokenFromNode);
+    }
+
+    // ====================================================================================== sendToken(token, fromNode)
+
+    @Override
+    public void sendToken(WorkToken token, Node fromNode) {
+        tokenOut.set(true);
+        if (!isRunner()) {
+            fromNode = (Node) merge(fromNode);
+        }
+        TokenFromNode tokenFromNode = new TokenFromNode();
+        tokenFromNode.setToken(token);
+        BusinessProcess process = fromNode.getProcess();
+        tokenFromNode.setProcessInstanceId(process.getId());
+        tokenFromNode.setProcessDefinitionId(process.getDefId());
+        tokenFromNode.setNodeId(fromNode.getDefId());
+        /*
+        find sequence flow element and create connector
+         */
+        TFlowNode tNode = BPMNUtils.getFlowNode(fromNode.getDefId(), process.getDefinition());
+        if (tNode == null) {
+            throw new IllegalStateException("Flow node with id:" + fromNode.getDefId() + " is not defined");
+        }
+        if (tNode.getOutgoing().size() != 1) {
+            throw new IllegalStateException("Call to WorkSession.sendToken(token, fromNode) with fromNode having multiple or no outgoing connectors");
+        }
+        String linkId = tNode.getOutgoing().get(0).getLocalPart();
+        TSequenceFlow link = BPMNUtils.find(linkId, process.getDefinition(), TSequenceFlow.class);
+        if (link == null) {
+            throw new IllegalStateException("Sequence flow with id:" + linkId + " not found");
+        }
+        tokenFromNode.setConnector(new Connector(link));
+        workItems.add(tokenFromNode);
     }
 
     // ================================================================================================ handleEventToken
@@ -802,6 +828,21 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             // do not persist
             return node;
         }
+        if (tNode instanceof TParallelGateway) {
+            ParallelGateway node = createParallelGateway((TParallelGateway) tNode, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
+            node.setSession(this);
+            for (QName qName : ((TParallelGateway) tNode).getIncoming()) {
+                PathSocket socket = new PathSocket(qName.getLocalPart());
+                socket.setNode(node);
+                node.getSockets().add(socket);
+//                persist(socket);
+            }
+            persist(node);
+            return node;
+        }
         throw new IllegalArgumentException("Unknown or unsupported node type: process=\"" + process.getDefId() +
                 "\", node(id=\"" + tNode.getId() + "\", name=\"" + tNode.getName() + "\")");
     }
@@ -875,6 +916,38 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
                         tNode.getId() + "\", name=\"" + tNode.getName() + "\", " + e);
             }
         }
+        return node;
+    }
+
+    // =========================================================================================== createParallelGateway
+
+    /**
+     * Creates an instance of Parallel Gateway
+     * <p/>
+     * Instantiates annotated class. If no annotated class found, instantiates ParallelGateway object. Does not persist
+     * the node.
+     *
+     * @param tNode
+     * @param process
+     * @return ParallelGateway
+     */
+    private ParallelGateway createParallelGateway(TParallelGateway tNode, BusinessProcess process) {
+        /*
+        Verify specification
+         */
+        switch (tNode.getGatewayDirection()) {
+            case CONVERGING:
+                if (tNode.getOutgoing().size() > 1) {
+                    throw new IllegalStateException("Converging gateway may not have more than one outgoing sequence flow, gateway id:" + tNode.getId());
+                }
+                break;
+            case DIVERGING:
+                if (tNode.getIncoming().size() > 1) {
+                    throw new IllegalStateException("Diverging gateway may not have more than one incoming sequence flow, gateway id:" + tNode.getId());
+                }
+                break;
+        }
+        ParallelGateway node = instantiateNode(tNode, ParallelGateway.class, process);
         return node;
     }
 

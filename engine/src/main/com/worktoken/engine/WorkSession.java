@@ -57,8 +57,7 @@ public interface WorkSession {
      *
      * @param tokens
      */
-    public void sendTokens(Map<Connector, WorkToken> tokens);
-
+    public void sendTokens(Map<Connector, WorkToken> tokens, Node fromNode);
 
     /**
      * Parse BPMN specification and register process definitions.
