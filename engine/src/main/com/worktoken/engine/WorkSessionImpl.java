@@ -244,6 +244,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             query = "ScriptTask";
         } else if (nodeDef instanceof TParallelGateway) {
             query = "ParallelGateway";
+        } else if (nodeDef instanceof TServiceTask) {
+            query = "ServiceTask";
         } else {
             throw new IllegalStateException("Unsupported node type: " + nodeDef.getClass().getName());
         }
@@ -791,6 +793,15 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             }
             node.setSession(this);
             // do not persist
+            return node;
+        }
+        if (tNode instanceof TServiceTask) {
+            ServiceTask node = instantiateNode(tNode, ServiceTask.class, process);
+            if (lane != null) {
+                node.setLaneDefId(lane.getId());
+            }
+            node.setSession(this);
+            persist(node);
             return node;
         }
         if (tNode instanceof TEventBasedGateway) {

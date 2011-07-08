@@ -28,7 +28,7 @@
 			<outgoing>_2_17</outgoing>
 		</serviceTask>
 
-		<exclusiveGateway gatewayDirection="Unspecified" id="_2_10" name="Credit OK?">
+		<exclusiveGateway gatewayDirection="Unspecified" id="_2_10" name="Credit OK?" default="_2_21">
             <incoming>_2_11</incoming>
 			<outgoing>_2_15</outgoing>
 			<outgoing>_2_21</outgoing>
@@ -40,7 +40,7 @@
 			<terminateEventDefinition id="ID_62701424_2410_6200_2400_000000600035"/>
 		</endEvent>
 
-		<exclusiveGateway gatewayDirection="Diverging" id="_2_16" name="Out of stock?">
+		<exclusiveGateway gatewayDirection="Diverging" id="_2_16" name="Out of stock?" default="_2_20">
             <incoming>_2_17</incoming>
 			<outgoing>_2_18</outgoing>
 			<outgoing>_2_20</outgoing>
