@@ -92,7 +92,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         }
         SessionRegistry.addSession(this);
         workItems = new LinkedBlockingQueue<WorkItem>();
-        executor = Executors.newFixedThreadPool(10);
+        executor = Executors.newCachedThreadPool();
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
         tokenOut = new ThreadLocal<Boolean>();
