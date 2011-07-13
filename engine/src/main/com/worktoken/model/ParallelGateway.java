@@ -52,7 +52,8 @@ public class ParallelGateway extends Node {
     }
 
     @Override
-    public void tokenIn(WorkToken token, Connector connectorIn) {
+    public final void tokenIn(WorkToken token, Connector connectorIn) {
+        registerToken(token, connectorIn);
         PathSocket socket = findSocket(connectorIn.getId());
         if (socket == null) {
             throw new IllegalStateException("Parallel Gateway id:" + getDefId() + " does not have incoming sequence flow with id:" + connectorIn.getId());
@@ -62,6 +63,9 @@ public class ParallelGateway extends Node {
           consumeTokens();
           fireTransition();
         }
+    }
+
+    protected void registerToken(WorkToken token, Connector connectorIn) {
     }
 
     protected void consumeTokens() {
@@ -79,9 +83,14 @@ public class ParallelGateway extends Node {
             if (link == null) {
                 throw new IllegalStateException("Sequence flow with id:" + qName.getLocalPart() + " not found");
             }
-            tokenMap.put(new Connector(link), new WorkToken());
+            Connector connector = new Connector(link);
+            tokenMap.put(connector, newToken(connector));
         }
         tokensOut(tokenMap);
+    }
+
+    protected WorkToken newToken(Connector connector) {
+        return new WorkToken();
     }
 
     protected boolean isReady() {

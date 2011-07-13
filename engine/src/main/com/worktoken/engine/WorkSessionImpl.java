@@ -52,11 +52,14 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     // runner thread stuff
     private ExecutorService executor;
-    Future<String> future;
+    private Future<String> future;
     private volatile boolean cancelled;
     private LinkedBlockingQueue<WorkItem> workItems;
     private static long TriggerPollCycle = 60000L;
     private long lastTriggerPollTime = 0L;
+
+    // Concurrent tasks
+    private Map<Long, Future<String>> activeTasks;
 
     // BPMN stuff
     private ThreadLocal<Boolean> tokenOut;
@@ -96,6 +99,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         em = new ThreadLocal<EntityManager>();
         acquireCounter = new ThreadLocal<Integer>();
         tokenOut = new ThreadLocal<Boolean>();
+        activeTasks = new HashMap<Long, Future<String>>();
         future = executor.submit(this);
     }
 
@@ -137,6 +141,12 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
                     try {
                         node = findOrCreateNode(t4n.getNodeDef(), process);
                         node.tokenIn(t4n.getToken(), t4n.getConnector());
+                        if (node instanceof Callable) {
+                            if (activeTasks.containsKey(node.getId())) {
+                                throw new IllegalStateException("Multiple tasks with id:" + node.getId());
+                            }
+                            activeTasks.put(node.getId(), executor.submit((Callable<String>)node));
+                        }
                     } catch (Exception e) {
                         markRollbackTransaction();
                         commitTransaction();
@@ -313,22 +323,11 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     private void handleTokenFromNode(TokenFromNode tokenFromNode) {
         TFlowNode target;
-//        if (tokenFromNode.getConnector() == null) {
-//            List<TFlowNode> toNodeDefs = findNext(tokenFromNode.getNodeId(), tokenFromNode.getProcessDefinitionId());
-//            if (toNodeDefs.size() == 0) {
-//                throw new IllegalStateException("No paths from \"" + tokenFromNode.getNodeId() + "\"");
-//            }
-//            if (toNodeDefs.size() > 1) {
-//                throw new IllegalStateException("Multiple paths from \"" + tokenFromNode.getNodeId() + "\", please specify Connector");
-//            }
-//            target = toNodeDefs.get(0);
-//        } else {
         Connector connector = tokenFromNode.getConnector();
         if (!(connector.getDefinition().getTargetRef() instanceof TFlowNode)) {
             throw new IllegalStateException("Target node " + connector.getDefinition().getTargetRef().toString() + " is not of TFlowNode type");
         }
         target = (TFlowNode) connector.getDefinition().getTargetRef();
-//        }
         TokenForNode t4n = new TokenForNode();
         t4n.setToken(tokenFromNode.getToken());
         t4n.setNodeDef(target);
@@ -344,6 +343,14 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         calling tokenIn (see call() method)
          */
         Node source = findNode(tSource, process);
+        if (source instanceof Callable) {
+            if (activeTasks.containsKey(source.getId())) {
+        /*
+        Removing associated future object. We do not care whether execution completed.
+         */
+                activeTasks.remove(source.getId());
+            }
+        }
         if (source != null) {
             if (source instanceof CatchEventNode) {
                 CatchEventNode eventNode = (CatchEventNode) source;

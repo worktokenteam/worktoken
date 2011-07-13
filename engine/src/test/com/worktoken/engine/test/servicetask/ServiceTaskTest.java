@@ -58,7 +58,9 @@ public class ServiceTaskTest {
         Prepare and verify annotation library
          */
         List<Class> annotatedClasses = new ArrayList<Class>();
-//        annotatedClasses.add(HelpDeskProcess.class);
+        annotatedClasses.add(ReceiveOrder.class);
+        annotatedClasses.add(DivergingGateway.class);
+        annotatedClasses.add(CheckCredit.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 //        Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
@@ -90,7 +92,7 @@ public class ServiceTaskTest {
     /**
      * Test order process, path 1
      * <p/>
-     * Path 1: Receive order
+     * Path 1: Receive order for good credit customer and in stock item
      *
      * @throws Exception
      */
@@ -117,13 +119,12 @@ public class ServiceTaskTest {
         trigger.
          */
         EventToken message = new EventToken();
-        String item = "My question";
-        message.getData().put("customer", "customer@example.com");
-        message.getData().put("item", item);
+        message.getData().put("customerId", "11111");
+        message.getData().put("itemId", "MBP-17");
         message.setDefinitionId("newOrder");
         session.sendEventToken(message, processId);
-        System.out.println("Waiting 1 second for the process to reach script task nodes");
-        Thread.sleep(2000);
+        System.out.println("Waiting 5 seconds for the process to reach user task node");
+        Thread.sleep(5000);
 
         /*
         Are we there yet?

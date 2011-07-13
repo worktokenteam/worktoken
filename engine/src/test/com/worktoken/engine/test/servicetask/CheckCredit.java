@@ -14,34 +14,42 @@
  * limitations under the License.
  */
 
-package com.worktoken.model;
+package com.worktoken.engine.test.servicetask;
+
+import com.worktoken.annotation.FlowElement;
+import com.worktoken.model.Connector;
+import com.worktoken.model.ServiceTask;
+import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
-import java.util.concurrent.Callable;
+import java.util.Random;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
-@NamedQueries({
-        @NamedQuery(name = "ServiceTask.findAll",
-                    query = "SELECT n FROM ServiceTask n"),
-        @NamedQuery(name = "ServiceTask.findByProcess",
-                    query = "SELECT n FROM ServiceTask n WHERE n.process = :process"),
-        @NamedQuery(name = "ServiceTask.findByDefIdAndProcess",
-                    query = "SELECT n FROM ServiceTask n WHERE n.defId = :defId AND n.process = :process")
-})
-public class ServiceTask extends Node implements Callable<String> {
+@FlowElement(nodeRef = "_2_6", processId = "orderProcess")
+public class CheckCredit extends ServiceTask {
+
+    private String customerId;
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
+        customerId = token.getData().get("customerId").toString();
     }
 
     @Override
     public String call() throws Exception {
-        tokenOut();
+        String result;
+        Thread.sleep(3000); // calling remote service, it takes time...
+        if ("11111".equals(customerId)) {
+            result = "Yes";
+        } else {
+            result = "No";
+        }
+        WorkToken token = new WorkToken();
+        token.getData().put("Credit OK?", result);
+        tokenOut(token);
         return null;
     }
 }
