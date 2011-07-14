@@ -60,7 +60,10 @@ public class ServiceTaskTest {
         List<Class> annotatedClasses = new ArrayList<Class>();
         annotatedClasses.add(ReceiveOrder.class);
         annotatedClasses.add(DivergingGateway.class);
+        annotatedClasses.add(ConvergingGateway.class);
         annotatedClasses.add(CheckCredit.class);
+        annotatedClasses.add(CheckStock.class);
+        annotatedClasses.add(ProcessOrder.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
 //        Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
@@ -119,8 +122,10 @@ public class ServiceTaskTest {
         trigger.
          */
         EventToken message = new EventToken();
-        message.getData().put("customerId", "11111");
-        message.getData().put("itemId", "MBP-17");
+        String customerId = "11111";
+        String itemId = "MBP-17";
+        message.getData().put("customerId", customerId);
+        message.getData().put("itemId", itemId);
         message.setDefinitionId("newOrder");
         session.sendEventToken(message, processId);
         System.out.println("Waiting 5 seconds for the process to reach user task node");
@@ -130,51 +135,18 @@ public class ServiceTaskTest {
         Are we there yet?
          */
         Assert.assertTrue(session.isRunning());
-//        System.out.println("Verifying Prepare Answer node");
-//        List<UserTask> userTasks = em.createQuery("SELECT task FROM UserTask task WHERE task.process.id = :id").setParameter("id", processId).getResultList();
-//        Assert.assertTrue(userTasks.size() == 1);
-//        Assert.assertTrue(userTasks.get(0) instanceof PrepareAnswer);
-//        PrepareAnswer userTask = (PrepareAnswer) userTasks.get(0);
-//        Assert.assertTrue("Prepare answer".equals(userTask.getDocumentation()));
-//        String lineDefId = userTask.getLaneDefId();
-//        Assert.assertTrue(lineDefId != null);
-//        Assert.assertTrue(lineDefId.equals("com_worktoken_helpdesk_1"));
-//        /*
-//        IMPORTANT: do not forget to detach the user task, otherwise we will have stale entity soon.
-//         */
-//        em.clear();
-//        Assert.assertTrue(item.equals(userTask.getSubject()));
-//
-//        System.out.println("Posting answer and completing the Prepare Answer task");
-//        userTask.setAnswer("It's alright, Ma");
-//        userTask.complete();
-//
-//        System.out.println("Waiting 2 seconds for the process to reach event based gateway node");
-//        Thread.sleep(2000);
-//
-//        System.out.println("Verifying gateway triggers");
-//        Assert.assertTrue(session.isRunning());
-//        List<EventTrigger> triggers = em.createQuery("SELECT t FROM EventTrigger t WHERE t.eventNode.process.id = :id").setParameter("id", processId).getResultList();
-//        Assert.assertTrue(triggers.size() == 2);    // must be 2 triggers - message event and timer event
-//        em.clear();
-//
-//        System.out.println("Adjusting timer alarm time to ensure it is ready to be fired");
-//        TimerTrigger timer = (TimerTrigger) em.createQuery("SELECT t FROM TimerTrigger t WHERE t.eventNode.process.id = :id").setParameter("id", processId).getSingleResult();
-//        timer.setNextAlarm(new Date());
-//        em.merge(timer);
-//        em.flush();
-//        em.clear();
-//        System.out.println("Committing application transaction.");
-//        em.getTransaction().commit();
-//        System.out.println("Closing Entity Manager");
-//        em.close();
-//        System.out.println("\n==================== Waiting 6 seconds for the timer to fire, this should end the process ======================\n");
-//        Thread.sleep(6000);
-//
-//        System.out.println("\n==================== Verifying process termination =================================\n");
-//        Assert.assertTrue(session.isRunning());
-//        em = emf.createEntityManager();
-//        Assert.assertNull(em.find(HelpDeskProcess.class, processId));
+        List<UserTask> taskList = session.getUserTasks();
+        Assert.assertTrue(taskList.size() == 1);  // we have only one process running and it should arrive to "Process order" node
+        ProcessOrder processOrder = (ProcessOrder) taskList.get(0);
+        Assert.assertTrue(processOrder.getCustomerId().equals(customerId));
+        Assert.assertTrue(processOrder.getItemId().equals(itemId));
+        processOrder.complete();
+        Thread.sleep(1000);
+        Assert.assertTrue(session.isRunning());
+        em = emf.createEntityManager();
+        List<Node> nodes = em.createQuery("SELECT n FROM Node n").getResultList();
+        Assert.assertTrue(nodes.isEmpty());
+        Assert.assertNull(em.find(BusinessProcess.class, processId));
         em.close();
     }
 }

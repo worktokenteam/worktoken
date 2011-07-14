@@ -22,34 +22,33 @@ import com.worktoken.model.ServiceTask;
 import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
-import java.util.Random;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
-@FlowElement(nodeRef = "_2_6", processId = "orderProcess")
-public class CheckCredit extends ServiceTask {
+@FlowElement(nodeRef = "_2_8", processId = "orderProcess")
+public class CheckStock extends ServiceTask {
 
-    private String customerId;
+    private String itemId;
 
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
-        customerId = token.getData().get("customerId").toString();
+        itemId = token.getData().get("itemId").toString();
     }
 
     @Override
     public String call() throws Exception {
         String result;
-        Thread.sleep(3000); // calling remote service, it takes time...
-        if ("11111".equals(customerId)) {
-            result = "Yes";
-        } else {
+        Thread.sleep(1200); // calling remote service, it takes time...
+        if ("MBP-17".equals(itemId)) {
             result = "No";
+        } else {
+            result = "Yes";
         }
         WorkToken token = new WorkToken();
-        token.getData().put("Credit OK?", result);
-        token.getData().put("customerId", customerId);
+        token.getData().put("Out of stock?", result);
+        token.getData().put("itemId", itemId);
         tokenOut(token);
         return null;
     }

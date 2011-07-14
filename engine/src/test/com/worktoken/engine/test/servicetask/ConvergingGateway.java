@@ -18,39 +18,34 @@ package com.worktoken.engine.test.servicetask;
 
 import com.worktoken.annotation.FlowElement;
 import com.worktoken.model.Connector;
-import com.worktoken.model.ServiceTask;
+import com.worktoken.model.ParallelGateway;
 import com.worktoken.model.WorkToken;
 
 import javax.persistence.Entity;
-import java.util.Random;
 
 /**
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
-@FlowElement(nodeRef = "_2_6", processId = "orderProcess")
-public class CheckCredit extends ServiceTask {
-
+@FlowElement(nodeRef = "_2_19", processId = "orderProcess")
+public class ConvergingGateway extends ParallelGateway {
     private String customerId;
+    private String itemId;
 
     @Override
-    public void tokenIn(WorkToken token, Connector connector) {
-        customerId = token.getData().get("customerId").toString();
+    public void registerToken(WorkToken token, Connector connectorIn) {
+        if ("_2_21".equals(connectorIn.getId())) {
+            customerId = token.getData().get("customerId").toString();
+        } else if ("_2_20".equals(connectorIn.getId())) {
+            itemId = token.getData().get("itemId").toString();
+        }
     }
 
     @Override
-    public String call() throws Exception {
-        String result;
-        Thread.sleep(3000); // calling remote service, it takes time...
-        if ("11111".equals(customerId)) {
-            result = "Yes";
-        } else {
-            result = "No";
-        }
+    protected WorkToken newToken(Connector connector) {
         WorkToken token = new WorkToken();
-        token.getData().put("Credit OK?", result);
         token.getData().put("customerId", customerId);
-        tokenOut(token);
-        return null;
+        token.getData().put("itemId", itemId);
+        return token;
     }
 }
