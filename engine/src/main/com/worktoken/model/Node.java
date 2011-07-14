@@ -38,6 +38,8 @@ import java.util.Map;
                     query = "SELECT n FROM Node n WHERE n.defId = :defId AND n.process = :process"),
         @NamedQuery(name = "Node.countByProcess",
                     query =  "SELECT COUNT(n) FROM Node n WHERE n.process = :process"),
+        @NamedQuery(name = "Node.listIdsByProcess",
+                    query =  "SELECT id FROM Node n WHERE n.process = :process"),
         @NamedQuery(name = "Node.className",
                     query = "SELECT className FROM Node n WHERE n.id = :id")
 })

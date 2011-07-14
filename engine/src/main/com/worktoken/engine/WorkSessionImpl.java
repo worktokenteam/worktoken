@@ -285,7 +285,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         assert isRunner();
         if (isTerminateEvent(node)) {
             acquireEntityManager();
-            for (Node n : findNodes(process)) {
+            for (long id : getNodeIds(process)) {
+                Node n = getNode(id);
                 if (activeTasks.containsKey(n.getId())) {
                     Future<String> future = activeTasks.get(n.getId());
                     future.cancel(true);
@@ -1232,12 +1233,12 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         return definitionsMap;
     }
 
-    protected List<Node> findNodes(BusinessProcess process) {
-        acquireEntityManager();
-        List<Node> nodes = em.get().createNamedQuery("Node.findByProcess").setParameter("process", process).getResultList();
-        releaseEntityManager();
-        return nodes;
-    }
+//    protected List<Node> findNodes(BusinessProcess process) {
+//        acquireEntityManager();
+//        List<Node> nodes = em.get().createNamedQuery("Node.findByProcess").setParameter("process", process).getResultList();
+//        releaseEntityManager();
+//        return nodes;
+//    }
 
     @Override
     public TProcess getProcessDefinition(String id) {
@@ -1422,6 +1423,11 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         em.get().getTransaction().setRollbackOnly();
     }
 
+    // ====================================================================================================== getNodeIds
+
+    private List<Long> getNodeIds(BusinessProcess process) {
+        return em.get().createNamedQuery("Node.listIdsByProcess").setParameter("process", process).getResultList();
+    }
     // ========================================================================================================= getNode
 
     private Node getNode(long id) {
