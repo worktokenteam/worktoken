@@ -66,12 +66,6 @@ public class ServiceTaskTest {
         annotatedClasses.add(ProcessOrder.class);
         ClassListAnnotationDictionary dictionary = new ClassListAnnotationDictionary(annotatedClasses);
         dictionary.build();
-//        Assert.assertNotNull(dictionary.findProcess(null, "Help desk"));
-//        Assert.assertNotNull(dictionary.findNodeByName("Lookup answer"));
-//        Assert.assertNotNull(dictionary.findNodeByName("Prepare answer"));
-//        Assert.assertNotNull(dictionary.findNodeByName("Receive request"));
-//        Assert.assertNotNull(dictionary.findNodeByName("Send answer"));
-//        Assert.assertNotNull(dictionary.findNodeById("com_worktoken_helpdesk_1_55"));
 
         /*
         Create work session and load process definition
@@ -136,12 +130,65 @@ public class ServiceTaskTest {
          */
         Assert.assertTrue(session.isRunning());
         List<UserTask> taskList = session.getUserTasks();
-        Assert.assertTrue(taskList.size() == 1);  // we have only one process running and it should arrive to "Process order" node
+        Assert.assertTrue(taskList.size() == 1);  // we have only one process running and it should arrive at "Process order" node
         ProcessOrder processOrder = (ProcessOrder) taskList.get(0);
         Assert.assertTrue(processOrder.getCustomerId().equals(customerId));
         Assert.assertTrue(processOrder.getItemId().equals(itemId));
         processOrder.complete();
         Thread.sleep(1000);
+        Assert.assertTrue(session.isRunning());
+        em = emf.createEntityManager();
+        List<Node> nodes = em.createQuery("SELECT n FROM Node n").getResultList();
+        Assert.assertTrue(nodes.isEmpty());
+        Assert.assertNull(em.find(BusinessProcess.class, processId));
+        em.close();
+    }
+
+    /**
+     * Test order process, path 2
+     * <p/>
+     * Path 2: Receive order for good credit customer and out of stock item
+     * CheckStock sleeps 1.2 seconds, CheckCredit - 3 seconds. The process
+     * must end in OrderCancelled terminate end event node.
+     *
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPath2() throws Exception {
+
+
+        EntityManager em = emf.createEntityManager();
+
+        em.getTransaction().begin();
+
+        /*
+        Create process instance. We retrieve the process entity from database for verification purposes. After
+        verification the entity must be detached, otherwise we will have stale version of the object pretty soon.
+         */
+        long processId = session.createProcess("orderProcess");
+        Assert.assertTrue(processId > 0);
+        BusinessProcess process = em.find(BusinessProcess.class, processId);
+        Assert.assertNotNull(process);
+        em.clear();
+
+        /*
+        Sending "Service request" message. Please note that definition is the one of the message, not the event
+        trigger.
+         */
+        EventToken message = new EventToken();
+        String customerId = "11111";
+        String itemId = "MBP-15";
+        message.getData().put("customerId", customerId);
+        message.getData().put("itemId", itemId);
+        message.setDefinitionId("newOrder");
+        session.sendEventToken(message, processId);
+        System.out.println("Waiting 5 seconds for the process to reach terminate end event node");
+        Thread.sleep(5000);
+
+        /*
+        Are we there yet?
+         */
         Assert.assertTrue(session.isRunning());
         em = emf.createEntityManager();
         List<Node> nodes = em.createQuery("SELECT n FROM Node n").getResultList();

@@ -285,8 +285,12 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         assert isRunner();
         if (isTerminateEvent(node)) {
             acquireEntityManager();
-            // TODO: FIX! absolutely wrong, just run delete query
             for (Node n : findNodes(process)) {
+                if (activeTasks.containsKey(n.getId())) {
+                    Future<String> future = activeTasks.get(n.getId());
+                    future.cancel(true);
+                    activeTasks.remove(n.getId());
+                }
                 if (em.get().contains(n)) {
                     em.get().remove(n);
                 }
