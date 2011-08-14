@@ -27,6 +27,25 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * <p><b>Parallel Gateway</b> implementation.</p>
+ *
+ *  <p>A Parallel Gateway is used to synchronize (combine) parallel flows and to create parallel flows.</p>
+ *
+ *  <table cellpadding="5px"><tr><td><img src="doc-files/pargwydiv.png"/></td>
+ *  <td><img src="doc-files/pargwycnv.png"/></td></tr>
+ *  <tr><td colspan="2"><em>Diverging (left) and converging or synchronizing (right) parallel gateways.</em></td></tr></table>
+ *
+ *  <p>A Parallel Gateway creates parallel paths without checking any conditions; each outgoing Sequence Flow receives
+ *  a token upon execution of this Gateway. For incoming flows, the Parallel Gateway will wait for all incoming flows
+ *  before triggering the flow through its outgoing Sequence Flows.</p>
+ *
+ *  <p>ParallelGateway class finalizes tokenIn method and introduces several new overridable methods for life cycle
+ *  management. Every time the gateway receives a token (via <em>tokenIn()</em>), it calls
+ *  <em><a href="#registerToken(com.worktoken.model.WorkToken, com.worktoken.model.Connector)">registerToken()</a></em>,
+ *  to allow application specific token processing within derived classes. Upon execution, the gateway calls
+ *  <em><a href="#newToken(com.worktoken.model.Connector)">newToken()</a></em> method for each outgoing sequence flow to
+ *  obtain a token from derived class.</p>
+ *
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
@@ -39,7 +58,7 @@ import java.util.Set;
 public class ParallelGateway extends Node {
 
     @OneToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER, mappedBy = "node")
-    Set<PathSocket> sockets;
+    private Set<PathSocket> sockets;
 
     private TGatewayDirection direction;
 
@@ -65,6 +84,18 @@ public class ParallelGateway extends Node {
         }
     }
 
+    /**
+     * <p>Handles incoming token.</p>
+     *
+     * <p>This method is called every time Parallel Gateway receives a new token. Default implementation does not carry
+     * any actions. The method may be overwritten by derived classes to provide application specific token handling.
+     * The overriding method is not required to call parent method. The overriding method must not do any actions
+     * affecting workflow (e.g. calling <em>tokenOut()</em> method), as ParallelGateway manages complete life cycle
+     * of the gateway.</p>
+     *
+     * @param token - incoming token
+     * @param connectorIn - connector, the token arrived through
+     */
     protected void registerToken(WorkToken token, Connector connectorIn) {
     }
 
