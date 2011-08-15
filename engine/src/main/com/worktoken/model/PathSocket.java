@@ -19,6 +19,10 @@ package com.worktoken.model;
 import javax.persistence.*;
 
 /**
+ * <p>Helper class, used by for Parallel Gateway implementation</p>
+ *
+ * <p>Instances (JPA entities) of the PathSocket class track incoming tokens for Parallel Gateways.</p>
+ *
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity

@@ -93,8 +93,8 @@ public class ParallelGateway extends Node {
      * affecting workflow (e.g. calling <em>tokenOut()</em> method), as ParallelGateway manages complete life cycle
      * of the gateway.</p>
      *
-     * @param token - incoming token
-     * @param connectorIn - connector, the token arrived through
+     * @param token incoming token
+     * @param connectorIn incoming connector, the token arrived through
      */
     protected void registerToken(WorkToken token, Connector connectorIn) {
     }
@@ -120,6 +120,18 @@ public class ParallelGateway extends Node {
         tokensOut(tokenMap);
     }
 
+    /**
+     * <p>Creates a token for outgoing connector</p>
+     *
+     * <p>This method is called for each outgoing connector during Parallel Gateway execution. Default implementation
+     * generates new WorkToken object carrying no data. The method may be overwritten by derived classes to provide
+     * application specific tokens. The overriding method is not required to call parent method. The overriding method
+     * must not do any actions affecting workflow (e.g. calling <em>tokenOut()</em> method), as ParallelGateway manages
+     * complete life cycle of the gateway.</p>
+     *
+     * @param connector outgoing connector to generate a WorkToken object for
+     * @return token to be sent via the specified outgoing connector
+     */
     protected WorkToken newToken(Connector connector) {
         return new WorkToken();
     }

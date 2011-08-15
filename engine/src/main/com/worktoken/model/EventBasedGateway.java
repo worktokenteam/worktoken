@@ -21,11 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by IntelliJ IDEA.
- * User: sure
- * Date: 5/8/11
- * Time: 9:05 PM
- * To change this template use File | Settings | File Templates.
+ * <p><b>Event-Based gateway</b> implementation</p>
+ *
  */
 @Entity
 @NamedQueries({

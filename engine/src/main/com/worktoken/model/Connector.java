@@ -19,10 +19,10 @@ package com.worktoken.model;
 import org.omg.spec.bpmn._20100524.model.TSequenceFlow;
 
 /**
+ * <p><b>Sequence Flow</b> implementation. A wrapper around TSequenceFlow object.</p>
+ *
  * @author Alex Pavlov (alex@rushproject.com)
  */
-
-// TODO: do we really need the wrapper around TSequenceFlow?
 
 public class Connector {
     private final TSequenceFlow definition;

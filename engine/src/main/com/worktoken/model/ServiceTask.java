@@ -22,6 +22,14 @@ import javax.persistence.NamedQuery;
 import java.util.concurrent.Callable;
 
 /**
+ * <p><b>Service Task</b> implementation</p>
+ *
+ * <p>A Service Task is a Task that uses some sort of service, which could be a Web service or an automated application.
+ * It is anticipated that execution of Service Task may take considerable amount of time, this is why Service Task runs
+ * in a separate thread. The <em>tokenIn()</em> method, if overridden in subclass may not do any actions affecting
+ * workflow (e.g. calling <em>tokenOut()</em> method), as actual execution of the Service Task is triggered by call to
+ * <em>call()</em> method.</p>
+ *
  * @author Alex Pavlov (alex@rushproject.com)
  */
 @Entity
@@ -35,10 +43,32 @@ import java.util.concurrent.Callable;
 })
 public class ServiceTask extends Node implements Callable<String> {
 
+    /**
+     * <p>Handles incoming token</p>
+     *
+     * <p>The <em>tokenIn()</em> method, if overridden in subclass may not do any actions affecting workflow (e.g.
+     * calling <em>tokenOut()</em> method), as actual execution of the Service Task is triggered by call to
+     * <em>call()</em> method. The <em>tokenIn()</em> method is intended for preparing an object of ServiceTask type for
+     * execution (initializing variables, etc). The default implementation of the method carries no action and does not
+     * need to be called from overriding methods.</p>
+     *
+     * @param token incoming token
+     * @param connector incoming connector the token arrived through
+     */
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
     }
 
+    /**
+     * <p>Executes the Service Task</p>
+     *
+     * <p>The method implements Callable interface. Must call <em>tokenOut()</em> upon completion. Default
+     * implementation immediately calls the <em>tokenOut()</em> and does not need to be called from overriding
+     * method</p>
+     *
+     * @return string, which value is currently ignored by engine
+     * @throws Exception
+     */
     @Override
     public String call() throws Exception {
         tokenOut();
