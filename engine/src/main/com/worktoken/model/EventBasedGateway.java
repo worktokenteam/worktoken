@@ -35,8 +35,12 @@ import java.util.List;
 public class EventBasedGateway extends Node {
     @Transient
     List<Node> targets;
+
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
+        for (Node node : getTargets()) {
+            node.tokenIn(token, connector);
+        }
     }
 
     /*

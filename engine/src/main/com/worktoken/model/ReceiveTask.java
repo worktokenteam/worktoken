@@ -58,9 +58,17 @@ public class ReceiveTask extends Node {
         tokenOut();
     }
 
+    /**
+     * Handle incoming token.
+     * <p/>
+     * Default implementation carries no action. May be overridden to implement application specific token processing.
+     * If overridden, does not need to call superclass method.
+     * <p/>
+     * @param token incoming token
+     * @param connector incoming connector, the token arrived through
+     */
     @Override
     public void tokenIn(WorkToken token, Connector connector) {
-        tokenOut(token);
     }
 
 //    public Set<EventTrigger> getTriggers() {
