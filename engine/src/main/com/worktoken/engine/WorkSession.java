@@ -30,6 +30,8 @@ import java.util.Set;
  */
 public interface WorkSession {
 
+    public boolean isRunning();
+
     public String getId();
 
     /**

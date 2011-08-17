@@ -22,6 +22,7 @@ import org.omg.spec.bpmn._20100524.di.BPMNDiagram;
 import org.omg.spec.bpmn._20100524.model.*;
 import org.omg.spec.dd._20100524.dc.Bounds;
 import org.omg.spec.dd._20100524.di.Diagram;
+import sun.plugin2.message.ShutdownJVMMessage;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -68,6 +69,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
     private HashMap<String, ProcessDefinition> processDefinitions;
     private HashMap<String, MessageDefinition> messageDefinitions;
     private long threadId;
+    private boolean shutdown;
 
     // =========================================================================================== WorkSessionImpl
 
@@ -184,6 +186,8 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
                 }
                 commitTransaction();
                 releaseEntityManager();
+            } else if (shutdown) {   // exit loop if session is in shutdown mode and queue is empty
+                break;
             }
             fireTimers();
         }
@@ -195,6 +199,7 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     // ======================================================================================================= isRunning
 
+    @Override
     public boolean isRunning() {
         return !future.isDone();
     }
@@ -432,9 +437,20 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     @Override
     public void close() {
-        cancelled = true;
+        /*
+        Cancel all active tasks
+         */
+        Long[] keySet = activeTasks.keySet().toArray(new Long[0]);
+        for (Long id : keySet) {
+            activeTasks.get(id).cancel(true);
+            activeTasks.remove(id);
+        }
+        /*
+        Try to shutdown session thread by notifying it that it must exit if no incoming work items left in the queue
+         */
+        shutdown = true;
         try {
-            future.get(5000, TimeUnit.MILLISECONDS);
+            future.get(60, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             e.printStackTrace();
             Thread.currentThread().interrupt();
@@ -442,8 +458,22 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
             e.printStackTrace();
             throw new IllegalStateException("Failed to close session, " + e);
         } catch (TimeoutException e) {
-            e.printStackTrace();
-            throw new IllegalStateException("Failed to close session, " + e);
+            /*
+            Force cancellation if queue fails to clear
+             */
+            cancelled = true;
+            try {
+                future.get(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e1) {
+                e.printStackTrace();
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e1) {
+                e.printStackTrace();
+                throw new IllegalStateException("Failed to close session, " + e);
+            } catch (TimeoutException e1) {
+                e.printStackTrace();
+                throw new IllegalStateException("Failed to close session, " + e);
+            }
         } finally {
             executor.shutdown();
             SessionRegistry.removeSession(getId());

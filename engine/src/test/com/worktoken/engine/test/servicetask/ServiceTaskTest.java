@@ -17,6 +17,7 @@
 package com.worktoken.engine.test.servicetask;
 
 import com.worktoken.engine.ClassListAnnotationDictionary;
+import com.worktoken.engine.WorkSession;
 import com.worktoken.engine.WorkSessionImpl;
 import com.worktoken.engine.test.helpdesk.*;
 import com.worktoken.model.*;
@@ -42,18 +43,9 @@ public class ServiceTaskTest {
 
     private Connection connection;
     private EntityManagerFactory emf;
-    private WorkSessionImpl session;
+    private WorkSession session;
 
-    @Before
-    public void setUp() throws Exception {
-
-        /*
-        Start database and create entity manager factory
-         */
-        System.out.println("Starting in-memory HSQL database for unit tests");
-        connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
-        emf = Persistence.createEntityManagerFactory("testPU");
-
+    private WorkSession createWorkSession() {
         /*
         Prepare and verify annotation library
          */
@@ -70,15 +62,30 @@ public class ServiceTaskTest {
         /*
         Create work session and load process definition
          */
-        session = new WorkSessionImpl("com.worktoken.TestSession", emf, dictionary);
-        TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("servicetask.bpmn"));
+        WorkSession workSession = new WorkSessionImpl("com.worktoken.TestSession", emf, dictionary);
+        TDefinitions tDefinitions = workSession.readDefinitions(getClass().getResourceAsStream("servicetask.bpmn"));
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("serviceTask".equals(tDefinitions.getId()));
+        return workSession;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        /*
+        Start database and create entity manager factory
+         */
+        System.out.println("Starting in-memory HSQL database for unit tests");
+        connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
+        emf = Persistence.createEntityManagerFactory("testPU");
+        session = createWorkSession();
     }
 
     @After
     public void tearDown() throws Exception {
-        session.close();
+        if (session.isRunning()) {
+            session.close();
+        }
         if (emf != null) {
             emf.close();
         }
@@ -195,5 +202,67 @@ public class ServiceTaskTest {
         Assert.assertTrue(nodes.isEmpty());
         Assert.assertNull(em.find(BusinessProcess.class, processId));
         em.close();
+    }
+
+    /**
+     * Test order process, path 3 (restart work session while service tasks are in progress)
+     * <p/>
+     * Path 3: Receive order for good credit customer and out of stock item
+     * CheckStock sleeps 1.2 seconds, CheckCredit - 3 seconds. Session cancellation happens in 750 milliseconds
+     *
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPath3() throws Exception {
+
+
+        EntityManager em = emf.createEntityManager();
+
+        em.getTransaction().begin();
+
+        /*
+        Create process instance. We retrieve the process entity from database for verification purposes. After
+        verification the entity must be detached, otherwise we will have stale version of the object pretty soon.
+         */
+        long processId = session.createProcess("orderProcess");
+        Assert.assertTrue(processId > 0);
+        BusinessProcess process = em.find(BusinessProcess.class, processId);
+        Assert.assertNotNull(process);
+        em.clear();
+
+        /*
+        Sending "Service request" message. Please note that definition is the one of the message, not the event
+        trigger.
+         */
+        EventToken message = new EventToken();
+        String customerId = "11111";
+        String itemId = "MBP-15";
+        message.getData().put("customerId", customerId);
+        message.getData().put("itemId", itemId);
+        message.setDefinitionId("newOrder");
+        session.sendEventToken(message, processId);
+        System.out.println("Waiting 750 milliseconds before cancellation");
+        Thread.sleep(750);
+
+        /*
+        close session
+         */
+        Assert.assertTrue(session.isRunning());
+        System.out.println("========== Closing session =======");
+        session.close();
+        Assert.assertFalse(session.isRunning());
+
+        em = emf.createEntityManager();
+        List<Node> nodes = em.createQuery("SELECT n FROM Node n").getResultList();
+        Assert.assertTrue(nodes.size() == 2);
+        Assert.assertNotNull(em.find(BusinessProcess.class, processId));
+        em.close();
+
+        /*
+        re-create work session
+         */
+        session = createWorkSession();
+        Assert.assertTrue(session.isRunning());
     }
 }
