@@ -264,7 +264,23 @@ public class ServiceTaskTest {
         re-create work session
          */
         session = createWorkSession();
+        Assert.assertFalse(session.isRunning());
         session.start();
         Assert.assertTrue(session.isRunning());
+        em = emf.createEntityManager();
+        Assert.assertNotNull(em.find(BusinessProcess.class, processId));
+        em.close();
+        System.out.println("Waiting 5 seconds for the process to reach terminate end event node");
+        Thread.sleep(5000);
+
+        /*
+        Are we there yet?
+         */
+        Assert.assertTrue(session.isRunning());
+        em = emf.createEntityManager();
+        nodes = em.createQuery("SELECT n FROM Node n").getResultList();
+        Assert.assertTrue(nodes.isEmpty());
+        Assert.assertNull(em.find(BusinessProcess.class, processId));
+        em.close();
     }
 }

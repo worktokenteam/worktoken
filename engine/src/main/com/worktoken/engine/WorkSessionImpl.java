@@ -111,6 +111,23 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         if (isRunning()) {
             throw new IllegalStateException("Call to start() for already running WorkSession");
         }
+        /*
+        Recreate all incomplete service tasks
+         */
+        acquireEntityManager();
+        List<ServiceTask> serviceTasks = em.get().createNamedQuery("ServiceTask.findAll").getResultList();
+        for (ServiceTask node : serviceTasks) {
+            if (node instanceof Callable) {
+                if (activeTasks.containsKey(node.getId())) {
+                    throw new IllegalStateException("Multiple tasks with id:" + node.getId());
+                }
+                activeTasks.put(node.getId(), executor.submit((Callable<String>)node));
+            }
+        }
+        releaseEntityManager();
+        /*
+        Start runner thread
+         */
         future = executor.submit(this);
     }
     // =========================================================================================================== getId
