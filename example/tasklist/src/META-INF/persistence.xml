@@ -27,6 +27,7 @@
         <class>com.worktoken.model.MessageTrigger</class>
         <class>com.worktoken.model.Node</class>
         <class>com.worktoken.model.ReceiveTask</class>
+        <class>com.worktoken.model.ServiceTask</class>
         <class>com.worktoken.model.ScriptTask</class>
         <class>com.worktoken.model.SendTask</class>
         <class>com.worktoken.model.ThrowEventNode</class>

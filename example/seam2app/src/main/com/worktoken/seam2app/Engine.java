@@ -61,11 +61,8 @@ public class Engine {
             throw new IllegalStateException("Missing SeamAnnotationDictionary");
         }
         session = new WorkSessionImpl("seam2app", emf, dictionary);
-        try {
-            session.readDefinitions(getClass().getResourceAsStream(fileName));
-        } catch (JAXBException e) {
-            throw new IllegalStateException("Failed to parse BPMN file " + fileName + ", " + e);
-        }
+        session.readDefinitions(getClass().getResourceAsStream(fileName));
+        session.start();
     }
 
     @Destroy

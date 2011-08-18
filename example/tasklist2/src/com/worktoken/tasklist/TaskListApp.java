@@ -46,6 +46,7 @@ public class TaskListApp {
         // Create work session and load process definition
         session = new WorkSessionImpl("com.worktoken.tasklist", emf, dictionary);
         session.readDefinitions(TaskListApp.class.getResourceAsStream("tasklist.bpmn"));
+        session.start();
 
         do {
             String choice = mainMenu();

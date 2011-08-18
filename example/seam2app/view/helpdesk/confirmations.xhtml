@@ -19,7 +19,7 @@
                 </f:facet>
                 <rich:column>
                     <f:facet name="header">Subject</f:facet>
-                    <s:link id="_#{node.id}" view="/helpdesk/confirmation.xhtml" value="ReceiveTask for process #{node.process.instanceId}">
+                    <s:link id="_#{node.id}" view="/helpdesk/confirmation.xhtml" value="ReceiveTask for process #{node.process.id}">
                         <f:param name="taskid" value="#{node.id}"/>
                     </s:link>
                 </rich:column>

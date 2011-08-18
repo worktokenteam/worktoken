@@ -45,7 +45,7 @@ public class ReceiveConfirmationHome extends EntityHome<ReceiveConfirmation> {
     }
 
     public void complete() {
-        long processId = getInstance().getProcess().getInstanceId();
+        long processId = getInstance().getProcess().getId();
         em.flush();
         em.clear();
         WorkSession session = engine.getSession();

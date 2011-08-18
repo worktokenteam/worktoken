@@ -33,6 +33,7 @@ public class HelloWorldApp {
         // Create work session and load process definition
         WorkSessionImpl session = new WorkSessionImpl("com.worktoken.helloworld", emf, dictionary);
         session.readDefinitions(HelloWorldApp.class.getResourceAsStream("helloworld.bpmn"));
+        session.start();
 
         // Create process
         session.createProcess("helloWorld");
