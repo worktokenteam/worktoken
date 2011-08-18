@@ -81,6 +81,8 @@ public interface WorkSession {
 
     public void sendEventToken(EventToken eventToken, long processId);
 
+    public void start();
+
     public void close() throws InterruptedException;
 
     public TProcess getProcessDefinition(String defId);

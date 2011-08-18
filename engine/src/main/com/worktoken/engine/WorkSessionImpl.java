@@ -102,9 +102,17 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
         acquireCounter = new ThreadLocal<Integer>();
         tokenOut = new ThreadLocal<Boolean>();
         activeTasks = new HashMap<Long, Future<String>>();
-        future = executor.submit(this);
     }
 
+    // =========================================================================================================== start
+
+    @Override
+    public void start() {
+        if (isRunning()) {
+            throw new IllegalStateException("Call to start() for already running WorkSession");
+        }
+        future = executor.submit(this);
+    }
     // =========================================================================================================== getId
 
     @Override
@@ -201,7 +209,10 @@ public class WorkSessionImpl implements WorkSession, Callable<String> {
 
     @Override
     public boolean isRunning() {
-        return !future.isDone();
+        if (future != null) {
+            return !future.isDone();
+        }
+        return false;
     }
 
     // ====================================================================================================== fireTimers

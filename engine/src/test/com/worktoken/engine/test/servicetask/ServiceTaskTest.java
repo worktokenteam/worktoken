@@ -79,6 +79,7 @@ public class ServiceTaskTest {
         connection = DriverManager.getConnection("jdbc:hsqldb:mem:unit-testing-jpa", "sa", "");
         emf = Persistence.createEntityManagerFactory("testPU");
         session = createWorkSession();
+        session.start();
     }
 
     @After
@@ -263,6 +264,7 @@ public class ServiceTaskTest {
         re-create work session
          */
         session = createWorkSession();
+        session.start();
         Assert.assertTrue(session.isRunning());
     }
 }

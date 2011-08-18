@@ -69,6 +69,7 @@ public class HelloWorld {
         TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helloworld.bpmn"));
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("HelloWorld".equals(tDefinitions.getId()));
+        session.start();
     }
 
     @After

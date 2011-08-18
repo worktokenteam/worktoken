@@ -79,7 +79,7 @@ public class HelpDesk {
         TDefinitions tDefinitions = session.readDefinitions(getClass().getResourceAsStream("helpdesk.bpmn"));
         Assert.assertNotNull(tDefinitions);
         Assert.assertTrue("Definition".equals(tDefinitions.getId()));
-
+        session.start();
     }
 
     @After
